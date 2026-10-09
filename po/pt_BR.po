@@ -1,0 +1,157 @@
+# Portuguese translations for kidisks package
+# Traduções em português brasileiro para o pacote kidisks.
+# Copyright (C) 2026 Kidisks contributors
+# This file is distributed under the same license as the kidisks package.
+# Automatically generated, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: kidisks\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-09 08:36-0300\n"
+"PO-Revision-Date: 2026-10-09 08:30-0300\n"
+"Last-Translator: Kidisks contributors\n"
+"Language-Team: none\n"
+"Language: pt_BR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: src/main.c:44
+#, c-format
+msgid ""
+"Usage: kidisks [OPTION]...\n"
+"Disks, partitions, space usage and cleanup.\n"
+"\n"
+"  -t, --tab TAB        open on TAB: units, partitions, space or cleanup\n"
+"  -c, --config FILE    settings file (default ~/.config/kidisks/kidisks."
+"ini)\n"
+"  -v, --verbose        print what is going on\n"
+"  -V, --version        print the version and exit\n"
+"  -h, --help           print this help and exit\n"
+msgstr ""
+"Uso: kidisks [OPÇÃO]...\n"
+"Discos, partições, uso do espaço e limpeza.\n"
+"\n"
+"  -t, --tab ABA        abre na ABA: units (unidades), partitions "
+"(partições),\n"
+"                       space (espaço) ou cleanup (limpeza), ou o número "
+"dela\n"
+"  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kidisks/"
+"kidisks.ini)\n"
+"  -v, --verbose        mostra o que está acontecendo\n"
+"  -V, --version        mostra a versão e sai\n"
+"  -h, --help           mostra esta ajuda e sai\n"
+
+#: src/main.c:88
+#, c-format
+msgid "unknown tab: %s"
+msgstr "aba desconhecida: %s"
+
+#: src/main.c:105
+msgid ""
+"do not run Kidisks as root: it asks for the administrator password itself "
+"when a change needs it"
+msgstr ""
+"não rode o Kidisks como root: ele mesmo pede a senha de administrador quando "
+"uma alteração precisa"
+
+#: src/main.c:111
+msgid "cannot open the display"
+msgstr "não foi possível abrir a tela (display)"
+
+#: src/log.c:29
+msgid "warning: "
+msgstr "aviso: "
+
+#: src/log.c:37
+msgid "error: "
+msgstr "erro: "
+
+#: src/prefs.c:39
+#, c-format
+msgid "could not read %s"
+msgstr "não foi possível ler %s"
+
+#: ui/window.c:33
+msgid "_Units"
+msgstr "_Unidades"
+
+#: ui/window.c:34
+msgid ""
+"Disks and partitions at a glance: model, type, health, temperature and how "
+"full each partition is."
+msgstr ""
+"Discos e partições num relance: modelo, tipo, saúde, temperatura e quanto "
+"cada partição está ocupada."
+
+#: ui/window.c:37
+msgid "_Partitions"
+msgstr "_Partições"
+
+#: ui/window.c:38
+msgid "Create, delete, format and resize partitions."
+msgstr "Criar, excluir, formatar e redimensionar partições."
+
+#: ui/window.c:40
+msgid "_Space"
+msgstr "_Espaço"
+
+#: ui/window.c:41
+msgid "What takes up room on a disk, in concentric rings."
+msgstr "O que ocupa espaço num disco, em círculos concêntricos."
+
+#: ui/window.c:43
+msgid "_Cleanup"
+msgstr "_Limpeza"
+
+#: ui/window.c:44
+msgid "Remove caches, leftovers and traces that programs leave behind."
+msgstr "Remove caches, sobras e rastros que os programas deixam para trás."
+
+#: ui/window.c:76
+msgid "Coming in a future version."
+msgstr "Chega numa próxima versão."
+
+#: ui/window.c:103
+msgid "Disks, partitions, space usage and cleanup in one light program."
+msgstr "Discos, partições, uso do espaço e limpeza num programa leve."
+
+#: ui/window.c:105
+msgid ""
+"Kidisks is free software: you can redistribute it and/or modify it under the "
+"terms of the GNU General Public License as published by the Free Software "
+"Foundation, either version 3 of the License, or (at your option) any later "
+"version.\n"
+"\n"
+"Kidisks is distributed in the hope that it will be useful, but WITHOUT ANY "
+"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
+"FOR A PARTICULAR PURPOSE. See the GNU General Public License for more "
+"details."
+msgstr ""
+"O Kidisks é software livre: você pode redistribuí-lo e/ou modificá-lo sob os "
+"termos da Licença Pública Geral GNU, conforme publicada pela Free Software "
+"Foundation, na versão 3 da Licença ou (a seu critério) qualquer versão "
+"posterior.\n"
+"\n"
+"O Kidisks é distribuído na esperança de que seja útil, mas SEM NENHUMA "
+"GARANTIA; sem mesmo a garantia implícita de COMERCIABILIDADE ou ADEQUAÇÃO A "
+"UM DETERMINADO FIM. Veja a Licença Pública Geral GNU para mais detalhes."
+
+#: ui/window.c:136
+msgid "_File"
+msgstr "_Arquivo"
+
+#: ui/window.c:145
+msgid "_Help"
+msgstr "A_juda"
+
+#: ui/window.c:240
+msgid "out of memory"
+msgstr "sem memória"
+
+#: ui/window.c:304
+#, c-format
+msgid "could not save the settings: %s"
+msgstr "não foi possível salvar a configuração: %s"

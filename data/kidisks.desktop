@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Kidisks
+GenericName=Disk manager
+GenericName[pt_BR]=Gerenciador de discos
+Comment=Disks, partitions, space usage and cleanup
+Comment[pt_BR]=Discos, partições, uso do espaço e limpeza
+Exec=kidisks
+Icon=kidisks
+Terminal=false
+Categories=System;Filesystem;GTK;
+Keywords=disk;partition;format;usage;space;cleanup;cache;disco;partição;formatar;espaço;limpeza;
+StartupNotify=true

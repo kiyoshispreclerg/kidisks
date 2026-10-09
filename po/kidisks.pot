@@ -1,0 +1,132 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Kidisks contributors
+# This file is distributed under the same license as the kidisks package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: kidisks\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-09 08:36-0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/main.c:44
+#, c-format
+msgid ""
+"Usage: kidisks [OPTION]...\n"
+"Disks, partitions, space usage and cleanup.\n"
+"\n"
+"  -t, --tab TAB        open on TAB: units, partitions, space or cleanup\n"
+"  -c, --config FILE    settings file (default ~/.config/kidisks/kidisks."
+"ini)\n"
+"  -v, --verbose        print what is going on\n"
+"  -V, --version        print the version and exit\n"
+"  -h, --help           print this help and exit\n"
+msgstr ""
+
+#: src/main.c:88
+#, c-format
+msgid "unknown tab: %s"
+msgstr ""
+
+#: src/main.c:105
+msgid ""
+"do not run Kidisks as root: it asks for the administrator password itself "
+"when a change needs it"
+msgstr ""
+
+#: src/main.c:111
+msgid "cannot open the display"
+msgstr ""
+
+#: src/log.c:29
+msgid "warning: "
+msgstr ""
+
+#: src/log.c:37
+msgid "error: "
+msgstr ""
+
+#: src/prefs.c:39
+#, c-format
+msgid "could not read %s"
+msgstr ""
+
+#: ui/window.c:33
+msgid "_Units"
+msgstr ""
+
+#: ui/window.c:34
+msgid ""
+"Disks and partitions at a glance: model, type, health, temperature and how "
+"full each partition is."
+msgstr ""
+
+#: ui/window.c:37
+msgid "_Partitions"
+msgstr ""
+
+#: ui/window.c:38
+msgid "Create, delete, format and resize partitions."
+msgstr ""
+
+#: ui/window.c:40
+msgid "_Space"
+msgstr ""
+
+#: ui/window.c:41
+msgid "What takes up room on a disk, in concentric rings."
+msgstr ""
+
+#: ui/window.c:43
+msgid "_Cleanup"
+msgstr ""
+
+#: ui/window.c:44
+msgid "Remove caches, leftovers and traces that programs leave behind."
+msgstr ""
+
+#: ui/window.c:76
+msgid "Coming in a future version."
+msgstr ""
+
+#: ui/window.c:103
+msgid "Disks, partitions, space usage and cleanup in one light program."
+msgstr ""
+
+#: ui/window.c:105
+msgid ""
+"Kidisks is free software: you can redistribute it and/or modify it under the "
+"terms of the GNU General Public License as published by the Free Software "
+"Foundation, either version 3 of the License, or (at your option) any later "
+"version.\n"
+"\n"
+"Kidisks is distributed in the hope that it will be useful, but WITHOUT ANY "
+"WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS "
+"FOR A PARTICULAR PURPOSE. See the GNU General Public License for more "
+"details."
+msgstr ""
+
+#: ui/window.c:136
+msgid "_File"
+msgstr ""
+
+#: ui/window.c:145
+msgid "_Help"
+msgstr ""
+
+#: ui/window.c:240
+msgid "out of memory"
+msgstr ""
+
+#: ui/window.c:304
+#, c-format
+msgid "could not save the settings: %s"
+msgstr ""

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Kidisks: a drive with the usage rings of the Space tab on it. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <rect x="4" y="6" width="56" height="52" rx="7" fill="#3b4252"/>
+  <rect x="4" y="6" width="56" height="52" rx="7" fill="none" stroke="#2e3440" stroke-width="2"/>
+  <!-- outer ring -->
+  <path d="M32 12 A20 20 0 0 1 51.0 38.2 L44.4 36.1 A13 13 0 0 0 32 19 Z" fill="#5e81ac"/>
+  <path d="M51.0 38.2 A20 20 0 0 1 20.2 48.2 L24.4 42.5 A13 13 0 0 0 44.4 36.1 Z" fill="#a3be8c"/>
+  <path d="M20.2 48.2 A20 20 0 0 1 32 12 L32 19 A13 13 0 0 0 24.4 42.5 Z" fill="#ebcb8b"/>
+  <!-- inner ring -->
+  <circle cx="32" cy="32" r="12" fill="#88c0d0"/>
+  <path d="M32 20 A12 12 0 0 1 43.4 35.7 L32 32 Z" fill="#81a1c1"/>
+  <circle cx="32" cy="32" r="6" fill="#eceff4"/>
+  <circle cx="32" cy="32" r="2" fill="#3b4252"/>
+  <!-- activity light -->
+  <circle cx="52" cy="52" r="2.2" fill="#a3be8c"/>
+</svg>

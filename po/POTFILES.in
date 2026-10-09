@@ -1,0 +1,4 @@
+src/main.c
+src/log.c
+src/prefs.c
+ui/window.c
