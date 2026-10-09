@@ -31,7 +31,12 @@ make asan            # os testes com ASan/UBSan
 make lint            # cppcheck + funções proibidas (strcpy, strcat, sprintf, vsprintf, gets)
 make BUILD=build/clang CC=clang test   # também tem que passar com clang
 make pot             # recria po/kidisks.pot e mescla nos .po
-build/kidisks -v --exit-after-map      # mede o tempo até a janela aparecer
+make test-disks      # integração em loop device (udisksctl loop-setup, sem root)
+tools/check-lsblk.py # compara o --list com o lsblk desta máquina
+python3 tools/gen_fixtures.py          # recria tests/fixtures/sys1
+build/kidisks -v --exit-after-map      # tempos da abertura, etapa por etapa
+build/kidisks --list [-b] [-a]         # o modelo de discos em texto
+build/kidisks --info sda               # saúde (SMART) pelo UDisks2
 ```
 
 - Janela em teste: num X à parte, sem mexer no desktop do usuário:
@@ -41,6 +46,11 @@ build/kidisks -v --exit-after-map      # mede o tempo até a janela aparecer
 - O `~/.gtkrc-2.0` do usuário carrega o `appmenu-gtk-module`: a menu bar vai
   para o menu global e **não aparece na janela**. É o esperado. Para vê-la
   na captura, use um gtkrc sem a linha `gtk-modules` (`GTK2_RC_FILES=`).
+- Discos desta máquina: `sda` (SSD, sistema: `/` e `/home`), `sdb` (HD),
+  `sdc` (SSD Kingston, temperatura errada no libatasmart), `sdd` (leitor de
+  cartão vazio), `sde` (HD USB com LUKS aberto em `/media/kiyoshi/BACKUP`).
+  Só leitura neles: `--info`, `--list`. Nada de `--mount`/`--unmount` em
+  disco real; para isso, loop device.
 - Memória: meça a própria (`Private_Dirty` em `/proc/PID/smaps_rollup`),
   não o RSS: só as bibliotecas do GTK2 e os ícones SVG já dão ~30 MB de RSS
   compartilhado.
@@ -54,14 +64,27 @@ build/kidisks -v --exit-after-map      # mede o tempo até a janela aparecer
 | `src/main.c` | opções, gettext, recusa root, abre a janela |
 | `src/log.c`, `src/util.c`, `src/ini.c` | vindos do kikarinhas (`kd_pathf`, tamanhos em GiB/GB, .ini editável no lugar) |
 | `src/prefs.c` | o que a janela lembra (`~/.config/kidisks/kidisks.ini`) |
+| `src/disks.c` | modelo de discos: sysfs + banco do udev + mountinfo + swaps + statvfs; `kd_sources` aponta para fixtures |
+| `src/udisks.c` | UDisks2 por GDBus: SMART, montar, desmontar, ejetar, remover com segurança; `KIDISKS_ONLY_LOOP` |
+| `src/watch.c` | avisa mudanças: udev + POLLPRI no mountinfo/swaps, com debounce |
+| `src/health.c` | SMART em palavras, "4 anos e 11 meses" |
+| `src/cli.c` | `--info`, `--mount`, `--unmount`, `--eject`, `--power-off` |
+| `ui/app.h` | o que as abas compartilham (modelo, UDisks2, status, erros) |
+| `ui/units.c` | aba Unidades: cartões, barras de uso, botões |
 | `src/i18n.h` | `_()`, `N_()`, domínio `kidisks` |
-| `ui/window.c` | janela, abas, menus, atalhos (Alt+1..4, Ctrl+Q), sinais |
+| `ui/window.c` | janela, abas, menus, atalhos (Alt+1..4, Ctrl+Q, F5), sinais; mantém o modelo atualizado |
 | `data/` | `.desktop` e ícone (achado em `../data` quando roda do `build/`) |
 | `po/` | `kidisks.pot`, `LINGUAS`, `POTFILES.in`, um `.po` por idioma |
-| `tools/fill_po.py` | preenche traduções vazias de um `.po` a partir de um JSON |
+| `tools/fill_po.py` | preenche traduções vazias ou fuzzy de um `.po` a partir de um JSON (plurais como lista) |
+| `tools/gen_fixtures.py` | gera `tests/fixtures/sys1` (sysfs, udev, mountinfo, swaps falsos) |
+| `tools/check-lsblk.py` | compara `--list --all --bytes` com o `lsblk -b` |
+| `tests/integration/test-disks.sh` | `make test-disks`: imagem → loop → montar/desmontar |
+| `docs/TESTE-MANUAL.md` | roteiro para o computador de teste |
 
-`src/` (menos `main.c`) vira `build/libkd.a`, sem GTK, que é o que os
-testes linkam. Código que precisa do GTK vai em `ui/`.
+`src/` (menos `main.c`) vira `build/libkd.a`, sem GTK (GLib, GIO e libudev
+sim), que é o que os testes linkam. Código que precisa do GTK vai em `ui/`.
+Fonte da interface: poucas variações (negrito, `<big>`, `<small>`); cada
+nova custa um `FcFontSort` sobre todas as fontes instaladas (2455 aqui).
 
 ## Convenções
 

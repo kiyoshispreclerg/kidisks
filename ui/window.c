@@ -8,18 +8,25 @@
 #include <gtk/gtk.h>
 #include <signal.h>
 
+#include <stdarg.h>
+#include <string.h>
+
+#include "app.h"
 #include "i18n.h"
 #include "log.h"
 #include "prefs.h"
+#include "units.h"
+
+/* How often the used/free numbers are refreshed while the Units tab shows. */
+#define TICK_S 5
 
 typedef struct {
-    GtkWidget *window;
-    GtkWidget *notebook;
-    GtkWidget *status;
-    kd_prefs *prefs;
+    kd_app app;
     /* Last unmaximized size, for the prefs. */
     int width, height;
     bool maximized;
+    char *layout_key;
+    guint udisks_timer, tick;
 } kd_window;
 
 /* Each tab, in kd_tab order. The icons fall back to a generic one on themes
@@ -45,7 +52,7 @@ static const struct {
      {"edit-clear-all", "edit-clear", NULL}},
 };
 
-static GtkWidget *icon_image(const char *const *names, GtkIconSize size)
+GtkWidget *kd_icon_image(const char *const *names, GtkIconSize size)
 {
     GtkIconTheme *theme = gtk_icon_theme_get_default();
     const char *name = names[0];
@@ -63,7 +70,7 @@ static GtkWidget *placeholder_page(int t)
     GtkWidget *box = gtk_vbox_new(FALSE, 12);
     gtk_container_set_border_width(GTK_CONTAINER(box), 24);
 
-    GtkWidget *img = icon_image(tabs[t].icons, GTK_ICON_SIZE_DIALOG);
+    GtkWidget *img = kd_icon_image(tabs[t].icons, GTK_ICON_SIZE_DIALOG);
     gtk_box_pack_start(GTK_BOX(box), img, TRUE, TRUE, 0);
     gtk_misc_set_alignment(GTK_MISC(img), 0.5f, 1.0f);
 
@@ -84,12 +91,102 @@ static GtkWidget *placeholder_page(int t)
 static GtkWidget *tab_label(int t)
 {
     GtkWidget *box = gtk_hbox_new(FALSE, 6);
-    gtk_box_pack_start(GTK_BOX(box), icon_image(tabs[t].icons, GTK_ICON_SIZE_MENU),
+    gtk_box_pack_start(GTK_BOX(box), kd_icon_image(tabs[t].icons, GTK_ICON_SIZE_MENU),
                        FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), gtk_label_new_with_mnemonic(_(tabs[t].title)),
                        FALSE, FALSE, 0);
     gtk_widget_show_all(box);
     return box;
+}
+
+void kd_app_status(kd_app *app, const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    char *msg = g_strdup_vprintf(fmt, ap);
+    va_end(ap);
+    guint ctx = gtk_statusbar_get_context_id(GTK_STATUSBAR(app->status), "kd");
+    gtk_statusbar_pop(GTK_STATUSBAR(app->status), ctx);
+    gtk_statusbar_push(GTK_STATUSBAR(app->status), ctx, msg);
+    g_free(msg);
+}
+
+void kd_app_error(kd_app *app, const char *title, const char *detail)
+{
+    GtkWidget *d = gtk_message_dialog_new(GTK_WINDOW(app->window), GTK_DIALOG_DESTROY_WITH_PARENT,
+                                          GTK_MESSAGE_ERROR, GTK_BUTTONS_CLOSE, "%s", title);
+    if (detail && *detail)
+        gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d), "%s", detail);
+    g_signal_connect(d, "response", G_CALLBACK(gtk_widget_destroy), NULL);
+    gtk_widget_show(d);
+}
+
+/* ---- keeping the disk model fresh --------------------------------------------- */
+
+/* Scans again; force: rebuild the tabs even if the layout is the same. */
+static void rescan(kd_window *w, bool force)
+{
+    kd_disks *d = kd_disks_scan(NULL);
+    if (!d)
+        return;
+    char *key = kd_disks_layout_key(d);
+    bool changed = force || !w->layout_key || strcmp(key, w->layout_key) != 0;
+    g_free(w->layout_key);
+    w->layout_key = key;
+    kd_disks_free(w->app.disks);
+    w->app.disks = d;
+    kd_log_debug("rescan: %s", changed ? "rebuilding" : "numbers only");
+    kd_units_update(w->app.units, changed);
+}
+
+static void on_watch(void *ud)
+{
+    rescan(ud, false);
+}
+
+static gboolean udisks_settled(gpointer data)
+{
+    kd_window *w = data;
+    w->udisks_timer = 0;
+    const char *err = kd_udisks_error(w->app.udisks);
+    if (err)
+        kd_app_status(&w->app, "%s", err);
+    rescan(w, true);
+    return G_SOURCE_REMOVE;
+}
+
+/* UDisks2 sends bursts of property changes (a mount touches several
+ * objects): rebuild once they settle. */
+static void on_udisks(void *ud)
+{
+    kd_window *w = ud;
+    if (w->udisks_timer)
+        g_source_remove(w->udisks_timer);
+    w->udisks_timer = g_timeout_add(300, udisks_settled, w);
+}
+
+static gboolean on_tick(gpointer data)
+{
+    kd_window *w = data;
+    GdkWindow *gw = gtk_widget_get_window(w->app.window);
+    bool visible = gw && !(gdk_window_get_state(gw) & GDK_WINDOW_STATE_ICONIFIED);
+    if (visible && gtk_notebook_get_current_page(GTK_NOTEBOOK(w->app.notebook)) == KD_TAB_UNITS)
+        rescan(w, false);
+    return G_SOURCE_CONTINUE;
+}
+
+static void on_refresh(GtkMenuItem *item, gpointer data)
+{
+    (void)item;
+    rescan(data, true);
+}
+
+static void on_show_hidden(GtkCheckMenuItem *item, gpointer data)
+{
+    kd_window *w = data;
+    w->app.show_hidden = gtk_check_menu_item_get_active(item);
+    kd_prefs_set_int(w->app.prefs, "units", "show_hidden", w->app.show_hidden);
+    kd_units_update(w->app.units, true);
 }
 
 static void on_about(GtkMenuItem *item, gpointer data)
@@ -98,7 +195,7 @@ static void on_about(GtkMenuItem *item, gpointer data)
     kd_window *w = data;
     static const char *const authors[] = {"Kiyoshi", NULL};
     gtk_show_about_dialog(
-        GTK_WINDOW(w->window), "program-name", "Kidisks", "version", KD_VERSION,
+        GTK_WINDOW(w->app.window), "program-name", "Kidisks", "version", KD_VERSION,
         "logo-icon-name", "kidisks", "authors", authors,
         "comments", _("Disks, partitions, space usage and cleanup in one light program."),
         "license",
@@ -117,7 +214,7 @@ static void on_quit(GtkMenuItem *item, gpointer data)
 {
     (void)item;
     kd_window *w = data;
-    gtk_widget_destroy(w->window);
+    gtk_widget_destroy(w->app.window);
 }
 
 static GtkWidget *menu_item(GtkWidget *menu, const char *stock, GCallback cb,
@@ -142,6 +239,19 @@ static GtkWidget *menu_bar(kd_window *w, GtkAccelGroup *accel)
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(file), file_menu);
     gtk_menu_shell_append(GTK_MENU_SHELL(bar), file);
 
+    GtkWidget *view = gtk_menu_item_new_with_mnemonic(_("_View"));
+    GtkWidget *view_menu = gtk_menu_new();
+    gtk_menu_set_accel_group(GTK_MENU(view_menu), accel);
+    GtkWidget *refresh = menu_item(view_menu, GTK_STOCK_REFRESH, G_CALLBACK(on_refresh), w);
+    gtk_widget_add_accelerator(refresh, "activate", accel, GDK_F5, 0, GTK_ACCEL_VISIBLE);
+    GtkWidget *hidden =
+        gtk_check_menu_item_new_with_mnemonic(_("Show _hidden devices (loop, zram)"));
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(hidden), w->app.show_hidden);
+    g_signal_connect(hidden, "toggled", G_CALLBACK(on_show_hidden), w);
+    gtk_menu_shell_append(GTK_MENU_SHELL(view_menu), hidden);
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(view), view_menu);
+    gtk_menu_shell_append(GTK_MENU_SHELL(bar), view);
+
     GtkWidget *help = gtk_menu_item_new_with_mnemonic(_("_Help"));
     GtkWidget *help_menu = gtk_menu_new();
     menu_item(help_menu, GTK_STOCK_ABOUT, G_CALLBACK(on_about), w);
@@ -159,7 +269,7 @@ static gboolean on_key(GtkWidget *widget, GdkEventKey *ev, gpointer data)
     if ((ev->state & gtk_accelerator_get_default_mod_mask()) != GDK_MOD1_MASK)
         return FALSE;
     if (ev->keyval >= GDK_1 && ev->keyval < GDK_1 + KD_TAB_COUNT) {
-        gtk_notebook_set_current_page(GTK_NOTEBOOK(w->notebook), (int)(ev->keyval - GDK_1));
+        gtk_notebook_set_current_page(GTK_NOTEBOOK(w->app.notebook), (int)(ev->keyval - GDK_1));
         return TRUE;
     }
     return FALSE;
@@ -189,16 +299,16 @@ static void on_switch_page(GtkNotebook *nb, gpointer page, guint num, gpointer d
     (void)nb;
     (void)page;
     kd_window *w = data;
-    kd_prefs_set_int(w->prefs, "window", "tab", (int)num);
+    kd_prefs_set_int(w->app.prefs, "window", "tab", (int)num);
 }
 
 static void on_destroy(GtkWidget *widget, gpointer data)
 {
     (void)widget;
     kd_window *w = data;
-    kd_prefs_set_int(w->prefs, "window", "width", w->width);
-    kd_prefs_set_int(w->prefs, "window", "height", w->height);
-    kd_prefs_set_int(w->prefs, "window", "maximized", w->maximized);
+    kd_prefs_set_int(w->app.prefs, "window", "width", w->width);
+    kd_prefs_set_int(w->app.prefs, "window", "height", w->height);
+    kd_prefs_set_int(w->app.prefs, "window", "maximized", w->maximized);
     gtk_main_quit();
 }
 
@@ -207,7 +317,7 @@ static void on_destroy(GtkWidget *widget, gpointer data)
 static gboolean on_signal(gpointer data)
 {
     kd_window *w = data;
-    gtk_widget_destroy(w->window);
+    gtk_widget_destroy(w->app.window);
     return G_SOURCE_REMOVE;
 }
 
@@ -235,50 +345,65 @@ static gboolean on_first_expose(GtkWidget *widget, GdkEventExpose *ev, gpointer 
 int kd_window_run(const kd_window_opts *opts)
 {
     kd_window w = {0};
-    w.prefs = kd_prefs_load(opts->prefs_path);
-    if (!w.prefs) {
+    w.app.prefs = kd_prefs_load(opts->prefs_path);
+    if (!w.app.prefs) {
         kd_log_error(_("out of memory"));
         return 1;
     }
 
+    w.app.show_hidden = kd_prefs_get_int(w.app.prefs, "units", "show_hidden", 0, 0, 1);
+    kd_log_debug("%.1f ms: prefs", (double)(g_get_monotonic_time() - opts->start_us) / 1000.0);
+    w.app.disks = kd_disks_scan(NULL);
+    kd_log_debug("%.1f ms: disks scanned", (double)(g_get_monotonic_time() - opts->start_us) / 1000.0);
+    w.layout_key = w.app.disks ? kd_disks_layout_key(w.app.disks) : NULL;
+
     gtk_window_set_default_icon_name("kidisks");
-    w.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(w.window), "Kidisks");
-    gtk_window_set_wmclass(GTK_WINDOW(w.window), "kidisks", "Kidisks");
-    w.width = kd_prefs_get_int(w.prefs, "window", "width", 860, 400, 10000);
-    w.height = kd_prefs_get_int(w.prefs, "window", "height", 600, 300, 10000);
-    gtk_window_set_default_size(GTK_WINDOW(w.window), w.width, w.height);
-    if (kd_prefs_get_int(w.prefs, "window", "maximized", 0, 0, 1))
-        gtk_window_maximize(GTK_WINDOW(w.window));
+    w.app.window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(w.app.window), "Kidisks");
+    gtk_window_set_wmclass(GTK_WINDOW(w.app.window), "kidisks", "Kidisks");
+    w.width = kd_prefs_get_int(w.app.prefs, "window", "width", 860, 400, 10000);
+    w.height = kd_prefs_get_int(w.app.prefs, "window", "height", 600, 300, 10000);
+    gtk_window_set_default_size(GTK_WINDOW(w.app.window), w.width, w.height);
+    if (kd_prefs_get_int(w.app.prefs, "window", "maximized", 0, 0, 1))
+        gtk_window_maximize(GTK_WINDOW(w.app.window));
 
     GtkAccelGroup *accel = gtk_accel_group_new();
-    gtk_window_add_accel_group(GTK_WINDOW(w.window), accel);
+    gtk_window_add_accel_group(GTK_WINDOW(w.app.window), accel);
 
     GtkWidget *vbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_add(GTK_CONTAINER(w.window), vbox);
+    gtk_container_add(GTK_CONTAINER(w.app.window), vbox);
     gtk_box_pack_start(GTK_BOX(vbox), menu_bar(&w, accel), FALSE, FALSE, 0);
 
-    w.notebook = gtk_notebook_new();
-    for (int t = 0; t < KD_TAB_COUNT; t++)
-        gtk_notebook_append_page(GTK_NOTEBOOK(w.notebook), placeholder_page(t), tab_label(t));
-    gtk_box_pack_start(GTK_BOX(vbox), w.notebook, TRUE, TRUE, 0);
-
-    w.status = gtk_statusbar_new();
-    gtk_box_pack_start(GTK_BOX(vbox), w.status, FALSE, FALSE, 0);
+    w.app.notebook = gtk_notebook_new();
+    w.app.status = gtk_statusbar_new();
+    /* The tabs may report on the status bar from the start. */
+    w.app.udisks = kd_udisks_new(on_udisks, &w);
+    w.app.units = kd_units_new(&w.app);
+    kd_log_debug("%.1f ms: units tab built",
+                 (double)(g_get_monotonic_time() - opts->start_us) / 1000.0);
+    gtk_notebook_append_page(GTK_NOTEBOOK(w.app.notebook), kd_units_widget(w.app.units),
+                             tab_label(KD_TAB_UNITS));
+    for (int t = KD_TAB_UNITS + 1; t < KD_TAB_COUNT; t++)
+        gtk_notebook_append_page(GTK_NOTEBOOK(w.app.notebook), placeholder_page(t), tab_label(t));
+    gtk_box_pack_start(GTK_BOX(vbox), w.app.notebook, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), w.app.status, FALSE, FALSE, 0);
+    w.app.watch = kd_watch_new(on_watch, &w);
+    w.tick = g_timeout_add_seconds(TICK_S, on_tick, &w);
 
     int tab = opts->tab >= 0 ? opts->tab
-                             : kd_prefs_get_int(w.prefs, "window", "tab", KD_TAB_UNITS, 0,
+                             : kd_prefs_get_int(w.app.prefs, "window", "tab", KD_TAB_UNITS, 0,
                                                 KD_TAB_COUNT - 1);
-    gtk_widget_show_all(w.window);
+    gtk_widget_show_all(w.app.window);
+    kd_log_debug("%.1f ms: shown", (double)(g_get_monotonic_time() - opts->start_us) / 1000.0);
     /* After show: GtkNotebook ignores set_current_page on hidden pages. */
-    gtk_notebook_set_current_page(GTK_NOTEBOOK(w.notebook), tab);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(w.app.notebook), tab);
 
-    g_signal_connect(w.notebook, "switch-page", G_CALLBACK(on_switch_page), &w);
-    g_signal_connect(w.window, "key-press-event", G_CALLBACK(on_key), &w);
-    g_signal_connect(w.window, "configure-event", G_CALLBACK(on_configure), &w);
-    g_signal_connect(w.window, "window-state-event", G_CALLBACK(on_state), &w);
-    g_signal_connect(w.window, "destroy", G_CALLBACK(on_destroy), &w);
-    first_expose_id = g_signal_connect_after(w.window, "expose-event",
+    g_signal_connect(w.app.notebook, "switch-page", G_CALLBACK(on_switch_page), &w);
+    g_signal_connect(w.app.window, "key-press-event", G_CALLBACK(on_key), &w);
+    g_signal_connect(w.app.window, "configure-event", G_CALLBACK(on_configure), &w);
+    g_signal_connect(w.app.window, "window-state-event", G_CALLBACK(on_state), &w);
+    g_signal_connect(w.app.window, "destroy", G_CALLBACK(on_destroy), &w);
+    first_expose_id = g_signal_connect_after(w.app.window, "expose-event",
                                              G_CALLBACK(on_first_expose), (gpointer)opts);
 
     guint sig_ids[3];
@@ -295,14 +420,23 @@ int kd_window_run(const kd_window_opts *opts)
             g_source_destroy(src);
     }
 
+    g_source_remove(w.tick);
+    if (w.udisks_timer)
+        g_source_remove(w.udisks_timer);
+    kd_watch_free(w.app.watch);
+    kd_udisks_free(w.app.udisks);
+
     int rc = 0;
     if (opts->exit_after_map) {
         /* The window is still up: take it down without on_destroy. */
-        g_signal_handlers_disconnect_by_data(w.window, &w);
-        gtk_widget_destroy(w.window);
-    } else if (kd_prefs_save(w.prefs) < 0) {
+        g_signal_handlers_disconnect_by_data(w.app.window, &w);
+        gtk_widget_destroy(w.app.window);
+    } else if (kd_prefs_save(w.app.prefs) < 0) {
         kd_log_warn(_("could not save the settings: %s"), g_strerror(errno));
     }
-    kd_prefs_free(w.prefs);
+    kd_units_free(w.app.units);
+    kd_disks_free(w.app.disks);
+    g_free(w.layout_key);
+    kd_prefs_free(w.app.prefs);
     return rc;
 }

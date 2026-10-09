@@ -1,0 +1,4 @@
+E:ID_FS_TYPE=ntfs
+E:ID_FS_LABEL=Meus_Dados
+E:ID_FS_LABEL_ENC=Meus\x20Dados
+E:ID_PART_ENTRY_TYPE=0x7

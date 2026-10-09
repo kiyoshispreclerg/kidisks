@@ -1,0 +1,9 @@
+22 1 0:21 / /proc rw,nosuid shared:12 - proc proc rw
+30 1 8:1 / / rw,noatime shared:1 - ext4 /dev/sda1 rw
+31 30 259:1 / /boot/efi rw shared:2 - vfat /dev/nvme0n1p1 rw
+32 30 253:0 / /home rw shared:3 - ext4 /dev/mapper/luks-home rw
+33 30 0:45 / /srv rw shared:4 - btrfs /dev/mapper/vg-srv rw
+34 30 0:45 /sub /mnt/sub rw shared:5 - btrfs /dev/mapper/vg-srv rw
+35 30 8:16 / /media/u/MY\040STICK rw shared:6 - vfat /dev/sdb rw
+36 30 7:0 /etc /mnt/bind rw shared:7 - squashfs /dev/loop0 ro
+37 30 7:0 / /snap/core/1 ro shared:8 - squashfs /dev/loop0 ro

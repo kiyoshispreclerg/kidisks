@@ -16,13 +16,23 @@ what GParted, Filelight and BleachBit do:
 Kidisks runs as your user. When a change needs root, UDisks2 asks for the
 administrator password through polkit.
 
-**Status:** in development (phase 0: the window with empty tabs). See
-[PLANO.md](PLANO.md) (in Portuguese).
+**Status:** in development. The Units tab is done (phase 1): disks,
+partitions, LUKS and LVM, usage, health and temperature (SMART), mount,
+unmount and safe removal. See [PLANO.md](PLANO.md) (in Portuguese).
+
+Also from the command line:
+
+```sh
+kidisks --list            # disks and partitions
+kidisks --info sda        # health, temperature, power-on time
+kidisks --mount sdb1      # mounts it (and says where)
+kidisks --power-off sdb   # unmounts everything and powers the disk off
+```
 
 ## Building
 
 Dependencies (Debian/Ubuntu): `build-essential pkg-config libgtk2.0-dev
-gettext`.
+libudev-dev gettext`; to run: `udisks2`.
 
 ```sh
 make

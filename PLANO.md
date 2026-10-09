@@ -26,7 +26,7 @@ backup ou clonagem de disco.
 
 | Medida | Meta |
 |---|---|
-| Abrir a janela com os discos listados | < 150 ms |
+| Abrir a janela com os discos listados | < 200 ms (aqui; ver abaixo) |
 | Memória própria parada (aba Unidades; `Private_Dirty`) | < 15 MB |
 | Varrer `/home` com 1 milhão de arquivos (cache quente) | no máximo 1,5× o tempo do `du -sx` |
 | Memória por arquivo varrido | ≤ 48 bytes + o nome |
@@ -35,7 +35,15 @@ backup ou clonagem de disco.
 O RSS não serve de meta: uma janela GTK2 vazia já marca ~25 MB, quase
 tudo bibliotecas compartilhadas com os outros programas (GTK, librsvg dos
 ícones SVG, fontes). Na fase 0 o Kidisks marcou 38 MB de RSS e 6,8 MB de
-memória própria.
+memória própria; na fase 1, com a aba Unidades, 42 MB e 9 MB.
+
+A abertura era 150 ms na fase 0 (janela vazia: 105–130 ms). Com a aba
+Unidades cheia ficou em 160–200 ms nesta máquina, e o tempo não é do
+Kidisks: ler os discos leva 2 ms; o resto é o GTK2 medindo textos, e quase
+tudo dentro disso é o fontconfig ordenando as 2455 fontes instaladas aqui
+(`FcFontSetSort`), uma vez por variação de fonte usada (negrito, tamanho,
+itálico). Por isso a aba usa poucas variações. Num sistema com poucas
+fontes a abertura cai bastante.
 
 ## Arquitetura
 
@@ -355,6 +363,58 @@ Lições:
 `lsblk -b -o NAME,START,SIZE,FSTYPE,LABEL,MOUNTPOINT` nesta máquina. Testes
 com fixtures. Um loop device montado e desmontado pelo `kidisks` atualiza a
 aba sozinho.
+
+**Estado:** feita.
+
+- `src/disks.c`: o modelo, lido do sysfs, do banco do udev (o arquivo
+  `/run/udev/data/b<maj>:<min>` direto, sem libudev, para os testes
+  apontarem tudo para fixtures), `mountinfo`, `swaps` e `statvfs`.
+  Partições, lacunas livres (GPT reserva o fim; setor de 4 KiB), estendida e
+  lógicas, holders (LUKS, LVM, RAID), HD/SSD, disco do sistema.
+- `src/udisks.c`: GDBus assíncrono; SMART (`Drive.Ata`; `NVMe.Controller`
+  quando o UDisks for 2.10+), montar, desmontar, ejetar, "remover com
+  segurança" (desmonta tudo, tranca o LUKS, desliga), trava
+  `KIDISKS_ONLY_LOOP`.
+- `src/watch.c`: monitor do udev + `POLLPRI` no `mountinfo` e no `swaps`,
+  com debounce de 250 ms.
+- `ui/units.c`: um cartão por disco (modelo, detalhes, saúde, temperatura,
+  tempo ligado), uma linha por partição e volume (sistema de arquivos,
+  rótulo, ponto de montagem, barra de uso verde/âmbar/vermelha, montar,
+  desmontar, abrir pasta), colunas alinhadas entre os cartões. Números
+  atualizados a cada 5 s só com a aba visível; reconstrução só quando o
+  layout muda (`kd_disks_layout_key`).
+- Linha de comando: `--list [-b] [-a]`, `--info`, `--mount`, `--unmount`,
+  `--eject`, `--power-off`.
+- Testes: 10 do modelo (fixtures geradas por `tools/gen_fixtures.py`), 2
+  da saúde; `tools/check-lsblk.py` compara com o `lsblk` (14 dispositivos
+  aqui, 0 diferenças); `make test-disks` monta e desmonta partições de uma
+  imagem em loop device. Tudo passa com gcc, clang e ASan.
+- Ficou para a fase de cada um: "Ver espaço" (fase 4) e "clique no disco
+  abre a aba Partições" (fase 2).
+
+Lições:
+- **Temperatura errada do libatasmart:** o UDisks2 tira a temperatura do
+  libatasmart, que em SSDs Kingston/Phison lê o atributo 231 ("vida
+  restante") como temperatura: 96 °C num SSD a 36 °C. O Kidisks pede os
+  atributos (`SmartGetAttributes`, sem senha) e prefere o 194 (ou o 190);
+  leituras fora de -20..110 °C viram "sem dado".
+- **Pontes USB:** quase todas dizem ao kernel que são rotacionais, até
+  pendrives. HD/SSD só por fonte confiável: RPM do ATA, NVMe, cartão SD ou o
+  `RotationRate` do UDisks2.
+- **Partição estendida:** o sysfs dá 1 KiB para ela; o tamanho real vem do
+  `ID_PART_ENTRY_SIZE` do udev. Cada lógica tem o EBR 1 MiB antes:
+  lacunas de até 1 MiB (inclusive) não são espaço livre.
+- **btrfs:** no `mountinfo` aparece com `maj:min` anônimo (`0:xx`), então
+  a montagem é achada também pela origem (`/dev/mapper/...`).
+- **polkit:** sem `G_DBUS_CALL_FLAGS_ALLOW_INTERACTIVE_AUTHORIZATION` nas
+  chamadas, o polkit nem pergunta a senha.
+- **`udisksctl loop-setup`:** funciona sem senha para o usuário da sessão,
+  o que deixa os testes de disco sem root.
+- **GTK2:** uma `GtkDrawingArea` tem `GdkWindow` própria, então desenha a
+  partir de 0,0 (não da alocação). O `qsort` com 0 elementos e ponteiro
+  NULL é comportamento indefinido, e o UBSan pega.
+- **Medir tempo:** o `perf` está bloqueado aqui (`perf_event_paranoid` = 4);
+  o callgrind serve.
 
 ### Fase 2 — aba Partições, só leitura
 

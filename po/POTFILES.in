@@ -1,4 +1,9 @@
 src/main.c
 src/log.c
 src/prefs.c
+src/disks.c
+src/udisks.c
+src/health.c
+src/cli.c
 ui/window.c
+ui/units.c

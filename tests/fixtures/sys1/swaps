@@ -1,0 +1,4 @@
+Filename				Type		Size		Used		Priority
+/dev/sda5                               partition	2097148		1024		-2
+/dev/zram0                              partition	4194300		0		100
+/swapfile                               file		1048572		0		-3

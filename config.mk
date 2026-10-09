@@ -20,7 +20,7 @@ OPTFLAGS ?= -O2 -g
 
 # libkd (src/, minus main.c) is what the unit tests link: no GTK in it.
 # Library headers go in as -isystem so -Wpedantic/-Werror only judge our code.
-PKGS       =
+PKGS       = glib-2.0 gio-2.0 libudev
 PKG_CFLAGS = $(if $(PKGS),$(shell $(PKG_CONFIG) --cflags $(PKGS) | sed 's/-I/-isystem /g'))
 PKG_LIBS   = $(if $(PKGS),$(shell $(PKG_CONFIG) --libs $(PKGS)))
 

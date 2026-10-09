@@ -1,0 +1,3 @@
+E:DM_NAME=vg-srv
+E:ID_FS_TYPE=btrfs
+E:ID_FS_LABEL=srv

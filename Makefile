@@ -7,12 +7,18 @@ BUILD ?= build
 LIB_SRC = src/log.c \
       src/util.c \
       src/ini.c \
-      src/prefs.c
+      src/prefs.c \
+      src/disks.c \
+      src/udisks.c \
+      src/health.c \
+      src/watch.c \
+      src/cli.c
 LIBKD = $(BUILD)/libkd.a
 
 # The window: needs GTK.
 APP_SRC = src/main.c \
-      ui/window.c
+      ui/window.c \
+      ui/units.c
 APP_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(APP_SRC))
 
 UNIT_TESTS = $(patsubst tests/unit/%.c,$(BUILD)/tests/%,$(wildcard tests/unit/test_*.c))
@@ -20,7 +26,7 @@ UNIT_TESTS = $(patsubst tests/unit/%.c,$(BUILD)/tests/%,$(wildcard tests/unit/te
 ALL_CFLAGS  = $(STDFLAGS) $(OPTFLAGS) $(SANFLAGS) $(PKG_CFLAGS) $(CFLAGS)
 ALL_LDFLAGS = $(SANFLAGS) $(LDFLAGS)
 
-.PHONY: all test run asan asan-run install uninstall lint clean locale pot update-po
+.PHONY: all test test-disks run asan asan-run install uninstall lint clean locale pot update-po
 
 # Translations (po/LINGUAS lists the languages). Built into $(BUILD)/locale,
 # which the program finds next to its own executable.
@@ -74,6 +80,11 @@ test: all $(UNIT_TESTS)
 	done; \
 	if [ $$fail -ne 0 ]; then echo "*** unit tests FAILED"; exit 1; fi; \
 	echo "*** all unit tests passed"
+
+# Loop devices only (see the script). Not part of `make test`: it needs
+# udisksd and a session polkit lets set up loops.
+test-disks: $(BUILD)/kidisks
+	tests/integration/test-disks.sh $(BUILD)/kidisks
 
 run: $(BUILD)/kidisks $(MO_FILES)
 	$(BUILD)/kidisks $(ARGS)

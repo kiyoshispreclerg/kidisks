@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kidisks\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 08:36-0300\n"
+"POT-Creation-Date: 2026-10-09 09:38-0300\n"
 "PO-Revision-Date: 2026-10-09 08:30-0300\n"
 "Last-Translator: Kidisks contributors\n"
 "Language-Team: none\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: src/main.c:44
+#: src/main.c:46
 #, c-format
 msgid ""
 "Usage: kidisks [OPTION]...\n"
@@ -27,29 +27,29 @@ msgid ""
 "  -t, --tab TAB        open on TAB: units, partitions, space or cleanup\n"
 "  -c, --config FILE    settings file (default ~/.config/kidisks/kidisks."
 "ini)\n"
+"  -l, --list           list the disks and partitions and exit\n"
+"  -b, --bytes          with --list: sizes and offsets in bytes\n"
+"  -a, --all            with --list: also loop and zram devices\n"
+"      --info DISK      drive details and health (SMART)\n"
+"      --mount DEV      mount a filesystem (prints where)\n"
+"      --unmount DEV    unmount it\n"
+"      --eject DISK     eject the media\n"
+"      --power-off DISK unmount everything on the drive and power it off\n"
 "  -v, --verbose        print what is going on\n"
 "  -V, --version        print the version and exit\n"
 "  -h, --help           print this help and exit\n"
-msgstr ""
-"Uso: kidisks [OPÇÃO]...\n"
-"Discos, partições, uso do espaço e limpeza.\n"
-"\n"
-"  -t, --tab ABA        abre na ABA: units (unidades), partitions "
-"(partições),\n"
-"                       space (espaço) ou cleanup (limpeza), ou o número "
-"dela\n"
-"  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kidisks/"
-"kidisks.ini)\n"
-"  -v, --verbose        mostra o que está acontecendo\n"
-"  -V, --version        mostra a versão e sai\n"
-"  -h, --help           mostra esta ajuda e sai\n"
+msgstr "Uso: kidisks [OPÇÃO]...\nDiscos, partições, uso do espaço e limpeza.\n\n  -t, --tab ABA        abre na ABA: units (unidades), partitions (partições),\n                       space (espaço) ou cleanup (limpeza), ou o número dela\n  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kidisks/kidisks.ini)\n  -l, --list           lista os discos e partições e sai\n  -b, --bytes          com --list: tamanhos e posições em bytes\n  -a, --all            com --list: inclui loop e zram\n      --info DISCO     detalhes e saúde do disco (SMART)\n      --mount DISP     monta um sistema de arquivos (mostra onde)\n      --unmount DISP   desmonta\n      --eject DISCO    ejeta a mídia\n      --power-off DISCO desmonta tudo no disco e o desliga\n  -v, --verbose        mostra o que está acontecendo\n  -V, --version        mostra a versão e sai\n  -h, --help           mostra esta ajuda e sai\n"
 
-#: src/main.c:88
+#: src/main.c:107
 #, c-format
 msgid "unknown tab: %s"
 msgstr "aba desconhecida: %s"
 
-#: src/main.c:105
+#: src/main.c:130 ui/window.c:350
+msgid "out of memory"
+msgstr "sem memória"
+
+#: src/main.c:141
 msgid ""
 "do not run Kidisks as root: it asks for the administrator password itself "
 "when a change needs it"
@@ -57,7 +57,7 @@ msgstr ""
 "não rode o Kidisks como root: ele mesmo pede a senha de administrador quando "
 "uma alteração precisa"
 
-#: src/main.c:111
+#: src/main.c:148
 msgid "cannot open the display"
 msgstr "não foi possível abrir a tela (display)"
 
@@ -74,11 +74,219 @@ msgstr "erro: "
 msgid "could not read %s"
 msgstr "não foi possível ler %s"
 
-#: ui/window.c:33
+#: src/disks.c:1096
+msgid "[swap on]"
+msgstr "[swap ativa]"
+
+#. TRANSLATORS: space used in a filesystem: "31.2 GiB used of 45.9 GiB"
+#: src/disks.c:1103
+#, c-format
+msgid "%s used of %s"
+msgstr "%s usados de %s"
+
+#: src/disks.c:1132 ui/units.c:474
+msgid "HDD"
+msgstr "HD"
+
+#: src/disks.c:1133 ui/units.c:474
+msgid "SSD"
+msgstr "SSD"
+
+#: src/disks.c:1143
+msgid "serial"
+msgstr "série"
+
+#: src/disks.c:1147
+msgid "(no media)"
+msgstr "(sem mídia)"
+
+#: src/disks.c:1149
+msgid "[system]"
+msgstr "[sistema]"
+
+#: src/disks.c:1160
+msgid "(free)"
+msgstr "(livre)"
+
+#: src/disks.c:1164
+msgid "extended"
+msgstr "estendida"
+
+#: src/udisks.c:90
+#, c-format
+msgid "cannot talk to UDisks2: %s"
+msgstr "sem comunicação com o UDisks2: %s"
+
+#: src/udisks.c:95
+msgid "UDisks2 (udisksd) is not running"
+msgstr "o UDisks2 (udisksd) não está rodando"
+
+#: src/udisks.c:499
+msgid "Not allowed: the administrator password is needed for this."
+msgstr "Não permitido: é preciso a senha de administrador para isso."
+
+#: src/udisks.c:501
+msgid ""
+"The device is busy: close the programs and terminals using it and try again."
+msgstr "O dispositivo está em uso: feche os programas e terminais que o usam e tente de novo."
+
+#: src/udisks.c:577 ui/units.c:216
+msgid "KIDISKS_ONLY_LOOP is set: only loop devices may be changed."
+msgstr "KIDISKS_ONLY_LOOP está ativo: só loop devices podem ser alterados."
+
+#: src/udisks.c:579 ui/units.c:214
+msgid "UDisks2 is not ready yet."
+msgstr "O UDisks2 ainda não está pronto."
+
+#: src/udisks.c:592 src/udisks.c:666
+msgid "UDisks2 does not know this device."
+msgstr "O UDisks2 não conhece este dispositivo."
+
+#: src/udisks.c:596
+msgid "There is no filesystem to mount here."
+msgstr "Não há sistema de arquivos para montar aqui."
+
+#: src/udisks.c:597
+msgid "This device does not support that."
+msgstr "Este dispositivo não permite isso."
+
+#: src/udisks.c:669
+msgid "This drive cannot be powered off."
+msgstr "Este disco não pode ser desligado."
+
+#: src/health.c:12
+msgid "No health data (SMART)"
+msgstr "Sem dados de saúde (SMART)"
+
+#: src/health.c:16
+msgid "SMART is turned off on this drive"
+msgstr "O SMART está desligado neste disco"
+
+#: src/health.c:21
+msgid "FAILING: the drive says it is about to fail. Back up its data now."
+msgstr "FALHANDO: o disco avisa que vai falhar. Faça backup dos dados agora."
+
+#: src/health.c:25
+msgid "Health not read yet"
+msgstr "Saúde ainda não lida"
+
+#: src/health.c:30
+#, c-format
+msgid "Warning: %lld bad sector"
+msgid_plural "Warning: %lld bad sectors"
+msgstr[0] "Atenção: %lld setor defeituoso"
+msgstr[1] "Atenção: %lld setores defeituosos"
+
+#: src/health.c:37
+#, c-format
+msgid "Warning: %d attribute is failing"
+msgid_plural "Warning: %d attributes are failing"
+msgstr[0] "Atenção: %d atributo falhando"
+msgstr[1] "Atenção: %d atributos falhando"
+
+#: src/health.c:44
+#, c-format
+msgid "Good (%d attribute failed in the past)"
+msgid_plural "Good (%d attributes failed in the past)"
+msgstr[0] "Boa (%d atributo falhou no passado)"
+msgstr[1] "Boa (%d atributos falharam no passado)"
+
+#: src/health.c:50
+msgid "Good"
+msgstr "Boa"
+
+#: src/health.c:58
+#, c-format
+msgid "%lu year"
+msgid_plural "%lu years"
+msgstr[0] "%lu ano"
+msgstr[1] "%lu anos"
+
+#: src/health.c:59
+#, c-format
+msgid "%lu month"
+msgid_plural "%lu months"
+msgstr[0] "%lu mês"
+msgstr[1] "%lu meses"
+
+#: src/health.c:60
+#, c-format
+msgid "%lu day"
+msgid_plural "%lu days"
+msgstr[0] "%lu dia"
+msgstr[1] "%lu dias"
+
+#: src/health.c:61
+#, c-format
+msgid "%lu hour"
+msgid_plural "%lu hours"
+msgstr[0] "%lu hora"
+msgstr[1] "%lu horas"
+
+#: src/health.c:79
+msgid "less than an hour"
+msgstr "menos de uma hora"
+
+#. TRANSLATORS: two amounts of time: "4 years and 11 months"
+#: src/health.c:90
+#, c-format
+msgid "%s and %s"
+msgstr "%s e %s"
+
+#: src/cli.c:28
+#, c-format
+msgid "UDisks2 has no drive for %s"
+msgstr "o UDisks2 não tem um disco para %s"
+
+#: src/cli.c:34
+msgid "Health"
+msgstr "Saúde"
+
+#: src/cli.c:36
+msgid "Temperature"
+msgstr "Temperatura"
+
+#: src/cli.c:39
+msgid "Powered on for"
+msgstr "Tempo ligado"
+
+#: src/cli.c:42
+msgid "Bad sectors"
+msgstr "Setores defeituosos"
+
+#: src/cli.c:44 src/cli.c:46
+msgid "Rotation"
+msgstr "Rotação"
+
+#: src/cli.c:46
+msgid "none (solid state)"
+msgstr "nenhuma (estado sólido)"
+
+#: src/cli.c:47
+msgid "Removable"
+msgstr "Removível"
+
+#: src/cli.c:47 src/cli.c:48
+msgid "yes"
+msgstr "sim"
+
+#: src/cli.c:47 src/cli.c:48
+msgid "no"
+msgstr "não"
+
+#: src/cli.c:48
+msgid "Can be powered off"
+msgstr "Pode ser desligado"
+
+#: src/cli.c:58
+msgid "cancelled"
+msgstr "cancelado"
+
+#: ui/window.c:40
 msgid "_Units"
 msgstr "_Unidades"
 
-#: ui/window.c:34
+#: ui/window.c:41
 msgid ""
 "Disks and partitions at a glance: model, type, health, temperature and how "
 "full each partition is."
@@ -86,39 +294,39 @@ msgstr ""
 "Discos e partições num relance: modelo, tipo, saúde, temperatura e quanto "
 "cada partição está ocupada."
 
-#: ui/window.c:37
+#: ui/window.c:44
 msgid "_Partitions"
 msgstr "_Partições"
 
-#: ui/window.c:38
+#: ui/window.c:45
 msgid "Create, delete, format and resize partitions."
 msgstr "Criar, excluir, formatar e redimensionar partições."
 
-#: ui/window.c:40
+#: ui/window.c:47
 msgid "_Space"
 msgstr "_Espaço"
 
-#: ui/window.c:41
+#: ui/window.c:48
 msgid "What takes up room on a disk, in concentric rings."
 msgstr "O que ocupa espaço num disco, em círculos concêntricos."
 
-#: ui/window.c:43
+#: ui/window.c:50
 msgid "_Cleanup"
 msgstr "_Limpeza"
 
-#: ui/window.c:44
+#: ui/window.c:51
 msgid "Remove caches, leftovers and traces that programs leave behind."
 msgstr "Remove caches, sobras e rastros que os programas deixam para trás."
 
-#: ui/window.c:76
+#: ui/window.c:83
 msgid "Coming in a future version."
 msgstr "Chega numa próxima versão."
 
-#: ui/window.c:103
+#: ui/window.c:200
 msgid "Disks, partitions, space usage and cleanup in one light program."
 msgstr "Discos, partições, uso do espaço e limpeza num programa leve."
 
-#: ui/window.c:105
+#: ui/window.c:202
 msgid ""
 "Kidisks is free software: you can redistribute it and/or modify it under the "
 "terms of the GNU General Public License as published by the Free Software "
@@ -139,19 +347,172 @@ msgstr ""
 "GARANTIA; sem mesmo a garantia implícita de COMERCIABILIDADE ou ADEQUAÇÃO A "
 "UM DETERMINADO FIM. Veja a Licença Pública Geral GNU para mais detalhes."
 
-#: ui/window.c:136
+#: ui/window.c:233
 msgid "_File"
 msgstr "_Arquivo"
 
-#: ui/window.c:145
+#: ui/window.c:242
+msgid "_View"
+msgstr "E_xibir"
+
+#: ui/window.c:248
+msgid "Show _hidden devices (loop, zram)"
+msgstr "Mostrar dispositivos _ocultos (loop, zram)"
+
+#: ui/window.c:255
 msgid "_Help"
 msgstr "A_juda"
 
-#: ui/window.c:240
-msgid "out of memory"
-msgstr "sem memória"
-
-#: ui/window.c:304
+#: ui/window.c:435
 #, c-format
 msgid "could not save the settings: %s"
 msgstr "não foi possível salvar a configuração: %s"
+
+#. TRANSLATORS: usage bar: "41 GiB of 45.5 GiB (90%)"
+#: ui/units.c:39
+#, c-format
+msgid "%s of %s (%d%%)"
+msgstr "%s de %s (%d%%)"
+
+#: ui/units.c:105
+msgid "Used"
+msgstr "Usado"
+
+#: ui/units.c:105
+msgid "Free"
+msgstr "Livre"
+
+#: ui/units.c:106
+msgid "Total"
+msgstr "Total"
+
+#: ui/units.c:143
+#, c-format
+msgid "%s mounted at %s"
+msgstr "%s montado em %s"
+
+#: ui/units.c:145
+#, c-format
+msgid "%s unmounted"
+msgstr "%s desmontado"
+
+#: ui/units.c:147
+#, c-format
+msgid "%s is off: it can be unplugged now"
+msgstr "%s desligado: já pode ser desconectado"
+
+#: ui/units.c:149
+#, c-format
+msgid "%s ejected"
+msgstr "%s ejetado"
+
+#: ui/units.c:151
+#, c-format
+msgid "Could not change %s"
+msgstr "Não foi possível alterar %s"
+
+#: ui/units.c:172
+#, c-format
+msgid "Mounting %s…"
+msgstr "Montando %s…"
+
+#: ui/units.c:175
+#, c-format
+msgid "Unmounting %s…"
+msgstr "Desmontando %s…"
+
+#: ui/units.c:178
+#, c-format
+msgid "Preparing %s to be removed…"
+msgstr "Preparando %s para ser removido…"
+
+#: ui/units.c:181
+#, c-format
+msgid "Ejecting %s…"
+msgstr "Ejetando %s…"
+
+#: ui/units.c:193 ui/units.c:195
+msgid "Could not open the folder"
+msgstr "Não foi possível abrir a pasta"
+
+#: ui/units.c:277
+msgid "unlocked"
+msgstr "destrancado"
+
+#: ui/units.c:277
+msgid "locked"
+msgstr "trancado"
+
+#: ui/units.c:279
+msgid "in use by LVM"
+msgstr "em uso pelo LVM"
+
+#: ui/units.c:279
+msgid "LVM, inactive"
+msgstr "LVM, inativo"
+
+#: ui/units.c:281
+msgid "in a RAID array"
+msgstr "num arranjo RAID"
+
+#: ui/units.c:283
+msgid "swap, off"
+msgstr "swap, desligada"
+
+#: ui/units.c:285
+msgid "not mounted"
+msgstr "não montado"
+
+#: ui/units.c:313
+msgid "swap, in use"
+msgstr "swap, em uso"
+
+#: ui/units.c:332
+msgid "Mount"
+msgstr "Montar"
+
+#: ui/units.c:336
+msgid "Unmount"
+msgstr "Desmontar"
+
+#: ui/units.c:342
+msgid "Open in the file manager"
+msgstr "Abrir no gerenciador de arquivos"
+
+#: ui/units.c:429
+#, c-format
+msgid "powered on for %s"
+msgstr "ligado há %s"
+
+#: ui/units.c:484
+#, c-format
+msgid "serial %s"
+msgstr "série %s"
+
+#: ui/units.c:490
+msgid "system disk"
+msgstr "disco do sistema"
+
+#: ui/units.c:503
+msgid "Safely remove"
+msgstr "Remover com segurança"
+
+#: ui/units.c:507
+msgid "Eject"
+msgstr "Ejetar"
+
+#: ui/units.c:518
+msgid "No media"
+msgstr "Sem mídia"
+
+#: ui/units.c:534
+msgid "unallocated"
+msgstr "não alocado"
+
+#: ui/units.c:536
+msgid "extended partition"
+msgstr "partição estendida"
+
+#: ui/units.c:569
+msgid "No disks found."
+msgstr "Nenhum disco encontrado."
