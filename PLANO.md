@@ -441,7 +441,7 @@ formatar em sequência e conferir o layout resultante).
 **Aceite:** `make test-disks` em loop devices.
 `docs/TESTE-MANUAL.md` com o roteiro para o computador de teste.
 
-### Fase 4 — Espaço (anéis)
+### Fase 4 — Espaço (anéis) (feita, antes das fases 2 e 3)
 
 - `kd_scan` (thread, progresso, cancelar) e a árvore compacta.
 - `kd_rings`: layout dos anéis separado do desenho, testável sem GTK.
@@ -452,6 +452,70 @@ formatar em sequência e conferir o layout resultante).
 hardlinks, links simbólicos, pastas sem permissão e nomes com bytes
 inválidos em UTF-8). Metas de tempo e memória medidas em `docs/BENCH.md`
 contra o `du` e o Filelight.
+
+**Estado:** feita, antes das fases 2 e 3, a pedido.
+
+- `src/scan.c`: `kd_tree_scan` (bloqueante, sem nada global, roda em
+  thread; progresso e cancelamento por atômicos). `openat` + `fdopendir` +
+  `fstatat(AT_SYMLINK_NOFOLLOW)`, `st_blocks * 512`, não sai do sistema de
+  arquivos (`st_dev`; a pasta de montagem fica com tamanho 0, como no
+  `du -x`), hardlink contado uma vez (conjunto de inodes só para
+  `st_nlink > 1`). Lê todas as entradas de uma pasta antes de entrar nas
+  subpastas, então os filhos de cada pasta ficam juntos num vetor de
+  índices (`kids`), ordenados do maior para o menor. Nó de 32 bytes + 4 do
+  índice + o nome numa arena. Ids estáveis: `kd_tree_graft` ("olhar de
+  novo" uma pasta) e `kd_tree_remove` (lixeira, apagar) só acrescentam ou
+  tiram do pai.
+- `src/rings.c`: layout anel por anel (até 5), ângulo proporcional ao
+  tamanho em relação à pasta do centro, fatias abaixo de 1° agrupadas em
+  "N itens pequenos", matiz da fatia do primeiro anel; geometria e teste
+  de clique em coordenadas polares.
+- `ui/space.c`: botões dos lugares (pasta pessoal, cada sistema de
+  arquivos montado, "Escolher pasta…"), trilha de pastas, progresso com
+  cancelar, anéis em Cairo com fundo em cache e só o destaque redesenhado
+  no hover, nomes do primeiro anel do lado de fora com linha-guia,
+  menu de contexto (gerenciador de arquivos — num arquivo, com ele
+  selecionado pelo `org.freedesktop.FileManager1` —, terminal, copiar
+  caminho, lixeira, apagar com confirmação). Um trabalho por vez em
+  thread (varredura, lixeira ou apagar), conferido por um timer de 100 ms;
+  só a thread do GTK mexe na árvore.
+- `kd_remove_tree` (`src/util.c`): o `rm -r` do "Apagar", que não segue
+  links e não entra em outro sistema de arquivos montado dentro; a fase 5
+  vai usar.
+- Aba Unidades: botão "Ver o que ocupa espaço aqui" em cada partição
+  montada. Linha de comando: `--scan PASTA [--top N] [-b]` e
+  `--space PASTA` (abre a janela na aba Espaço).
+- Testes: 8 da varredura (total igual ao `du -sxB1` com hardlink, link
+  para fora, pasta sem permissão, nome com bytes inválidos; graft, remove,
+  cancelar, erros, `kd_remove_tree` sem seguir link) e 4 dos anéis.
+  Nesta máquina o `--scan` bateu com o `du -sxB1` em `/usr/share`, `/etc`,
+  `/var`, `~/Downloads` e `/` (com pastas sem permissão e montagens
+  dentro). Tudo passa com gcc, clang e ASan; a janela com ASan fecha
+  limpa no meio de uma varredura.
+- Medidas: hover redesenha em ~0,05 ms, o desenho completo em ~14 ms e o
+  layout em ~0,3 ms (`-v`); 13 MB de memória própria com
+  `/usr/share/icons` (56 mil arquivos) aberta. O tempo contra o `du` ainda
+  vai para o `docs/BENCH.md`: a primeira medição saiu contaminada (disco
+  disputado, cache frio por falta de memória livre).
+
+Lições:
+- **Pasta de montagem no `du -x`:** não conta nem o bloco da própria
+  pasta; com tamanho 0 os totais batem, inclusive em `/`.
+- **Hardlinks:** conta o primeiro encontrado. A ordem da nossa varredura
+  (a pasta inteira antes das subpastas) não é a do `du`, mas o total é o
+  mesmo.
+- **`qsort` não tem ponteiro de usuário no C11:** a árvore a ordenar vai
+  numa variável `_Thread_local` (cada thread ordena a sua).
+- **Anéis estreitos demais para texto:** com 5 anéis numa janela comum,
+  cada anel tem ~30 px; nomes dentro quase nunca cabem. Os do primeiro
+  anel vão do lado de fora, com linha, como no Filelight.
+- **GtkButton com imagem:** o filho deixa de ser o `GtkLabel`; para
+  limitar a largura do texto, monte o botão com uma `GtkHBox`.
+- **Lixeira em tmpfs:** o `g_file_trash` recusa ("system internal
+  mounts"); o erro aparece num diálogo e nada muda na árvore.
+- **LSan e GTK:** o GTK2 guarda para sempre o que carrega de ícones; a
+  supressão por nome de função só funciona com
+  `ASAN_OPTIONS=fast_unwind_on_malloc=0`.
 
 ### Fase 5 — Limpeza do usuário
 

@@ -199,6 +199,12 @@ static void on_open(GtkButton *btn, gpointer data)
     g_free(uri);
 }
 
+static void on_space(GtkButton *btn, gpointer data)
+{
+    kd_units *u = data;
+    kd_app_show_space(u->app, g_object_get_data(G_OBJECT(btn), "kd-path"));
+}
+
 static GtkWidget *action_button(kd_units *u, const char *label, const char *icon,
                                 const char *dev, const char *what)
 {
@@ -343,6 +349,15 @@ static void add_fs_row(rows *r, int indent, const char *name, const char *tip, c
             g_object_set_data_full(G_OBJECT(open), "kd-path", g_strdup(fs->mountpoint), g_free);
             g_signal_connect(open, "clicked", G_CALLBACK(on_open), u);
             gtk_box_pack_start(GTK_BOX(btns), open, FALSE, FALSE, 0);
+
+            static const char *const space_icons[] = {"disk-quota", "drive-harddisk", NULL};
+            GtkWidget *space = gtk_button_new();
+            gtk_button_set_image(GTK_BUTTON(space),
+                                 kd_icon_image(space_icons, GTK_ICON_SIZE_BUTTON));
+            gtk_widget_set_tooltip_text(space, _("See what takes up room here"));
+            g_object_set_data_full(G_OBJECT(space), "kd-path", g_strdup(fs->mountpoint), g_free);
+            g_signal_connect(space, "clicked", G_CALLBACK(on_space), u);
+            gtk_box_pack_start(GTK_BOX(btns), space, FALSE, FALSE, 0);
         }
     }
     attach(r, btns, 6, false);

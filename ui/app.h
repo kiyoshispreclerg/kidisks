@@ -31,12 +31,16 @@ typedef struct kd_app {
     kd_watch *watch;
     bool show_hidden; /* loop, zram... (View menu) */
     struct kd_units *units;
+    struct kd_space *space;
 } kd_app;
 
 /* A message in the status bar (replaces the previous one). */
 void kd_app_status(kd_app *app, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 /* An error dialog over the window. */
 void kd_app_error(kd_app *app, const char *title, const char *detail);
+
+/* Scans path in the Space tab and switches to it. */
+void kd_app_show_space(kd_app *app, const char *path);
 
 /* An icon from the theme: the first of names (NULL-terminated) the theme
  * has, else the first one. */

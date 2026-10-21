@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "cli.h"
 
+#include <errno.h>
 #include <glib.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,6 +10,7 @@
 #include "health.h"
 #include "i18n.h"
 #include "log.h"
+#include "scan.h"
 #include "udisks.h"
 #include "util.h"
 
@@ -117,4 +119,43 @@ int kd_cli_run(const char *action, const char *dev)
     kd_udisks_free(c.u);
     g_main_loop_unref(c.loop);
     return c.rc;
+}
+
+int kd_cli_scan(const char *path, int top, bool bytes)
+{
+    kd_tree *t = kd_tree_scan(path, NULL);
+    if (!t) {
+        kd_log_error(_("cannot scan %s: %s"), path, g_strerror(errno));
+        return 1;
+    }
+    const kd_node *root = kd_tree_node(t, KD_TREE_ROOT);
+    const char *rname = kd_tree_name(t, KD_TREE_ROOT);
+    const char *sep = g_str_has_suffix(rname, "/") ? "" : "/";
+    char sz[32];
+    if (bytes) {
+        printf("%llu\t%s\n", (unsigned long long)root->size, rname);
+    } else {
+        kd_format_size(sz, sizeof sz, root->size);
+        printf(ngettext("%s: %s in %u file\n", "%s: %s in %u files\n", root->files), rname, sz,
+               (unsigned)root->files);
+    }
+    for (uint32_t i = 0; i < root->count && (top < 0 || i < (uint32_t)top); i++) {
+        kd_node_id c = kd_tree_child(t, KD_TREE_ROOT, i);
+        const kd_node *n = kd_tree_node(t, c);
+        bool dir = n->flags & KD_NODE_DIR;
+        if (bytes) {
+            printf("%llu\t%s%s%s\n", (unsigned long long)n->size, rname, sep,
+                   kd_tree_name(t, c));
+        } else {
+            kd_format_size(sz, sizeof sz, n->size);
+            printf("%10s  %s%s%s\n", sz, kd_tree_name(t, c), dir ? "/" : "",
+                   (n->flags & KD_NODE_MOUNT) ? _("  (another filesystem, not counted)") : "");
+        }
+    }
+    if (t->denied)
+        kd_log_warn(ngettext("%u folder could not be read: the total is short",
+                             "%u folders could not be read: the total is short", t->denied),
+                    (unsigned)t->denied);
+    kd_tree_free(t);
+    return 0;
 }

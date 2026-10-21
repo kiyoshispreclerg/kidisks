@@ -16,14 +16,17 @@ o que o GParted, o Filelight e o BleachBit fazem:
 O Kidisks roda como usuário comum. Quando uma alteração precisa de root, o
 UDisks2 pede a senha de administrador pelo polkit.
 
-**Estado:** em desenvolvimento. Pronta a aba Unidades (fase 1): discos,
-partições, LUKS e LVM, uso, saúde e temperatura (SMART), montar,
-desmontar e remover com segurança. Veja o [PLANO.md](PLANO.md).
+**Estado:** em desenvolvimento. Prontas a aba Unidades (discos, partições,
+LUKS e LVM, uso, saúde e temperatura pelo SMART, montar, desmontar e
+remover com segurança) e a aba Espaço (anéis como no Filelight, com os
+mesmos totais do `du`, lixeira e apagar). Veja o [PLANO.md](PLANO.md).
 
 Também pela linha de comando:
 
 ```sh
 kidisks --list            # discos e partições
+kidisks --scan ~ --top 10 # o que mais ocupa espaço na pasta pessoal
+kidisks --space ~/Downloads  # abre a aba Espaço nessa pasta
 kidisks --info sda        # saúde, temperatura, tempo ligado
 kidisks --mount sdb1      # monta (e diz onde)
 kidisks --power-off sdb   # desmonta tudo e desliga o disco

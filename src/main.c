@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
+#include <limits.h>
 #include <locale.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
@@ -47,10 +49,13 @@ static void usage(FILE *f)
                  "Disks, partitions, space usage and cleanup.\n"
                  "\n"
                  "  -t, --tab TAB        open on TAB: units, partitions, space or cleanup\n"
+                 "  -s, --space DIR      open the Space tab looking into DIR\n"
                  "  -c, --config FILE    settings file (default ~/.config/kidisks/kidisks.ini)\n"
                  "  -l, --list           list the disks and partitions and exit\n"
-                 "  -b, --bytes          with --list: sizes and offsets in bytes\n"
+                 "  -b, --bytes          with --list or --scan: sizes and offsets in bytes\n"
                  "  -a, --all            with --list: also loop and zram devices\n"
+                 "      --scan DIR       what takes up room under DIR (total and biggest)\n"
+                 "      --top N          with --scan: how many entries (default 20, -1 all)\n"
                  "      --info DISK      drive details and health (SMART)\n"
                  "      --mount DEV      mount a filesystem (prints where)\n"
                  "      --unmount DEV    unmount it\n"
@@ -78,7 +83,8 @@ int main(int argc, char **argv)
 {
     kd_window_opts opts = {.tab = -1, .start_us = g_get_monotonic_time()};
     bool list = false, bytes = false, all = false;
-    const char *action = NULL, *action_dev = NULL;
+    const char *action = NULL, *action_dev = NULL, *scan = NULL;
+    int top = 20;
     static const char *const actions[] = {"info", "mount", "unmount", "eject", "power-off", NULL};
     setlocale(LC_ALL, "");
     find_self_dir();
@@ -107,6 +113,18 @@ int main(int argc, char **argv)
                 kd_log_error(_("unknown tab: %s"), argv[i]);
                 return 2;
             }
+        } else if ((strcmp(a, "-s") == 0 || strcmp(a, "--space") == 0) && more) {
+            opts.space_path = argv[++i];
+        } else if (strcmp(a, "--scan") == 0 && more) {
+            scan = argv[++i];
+        } else if (strcmp(a, "--top") == 0 && more) {
+            char *end;
+            long n = strtol(argv[++i], &end, 10);
+            if (*end || end == argv[i] || n < -1 || n > INT_MAX) {
+                kd_log_error(_("not a number: %s"), argv[i]);
+                return 2;
+            }
+            top = (int)n;
         } else if ((strcmp(a, "-c") == 0 || strcmp(a, "--config") == 0) && more) {
             opts.prefs_path = argv[++i];
         } else if (strncmp(a, "--", 2) == 0 && more && !action &&
@@ -124,6 +142,8 @@ int main(int argc, char **argv)
 
     if (action)
         return kd_cli_run(action, action_dev);
+    if (scan)
+        return kd_cli_scan(scan, top, bytes);
     if (list) {
         kd_disks *d = kd_disks_scan(NULL);
         if (!d) {

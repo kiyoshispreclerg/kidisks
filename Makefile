@@ -12,13 +12,16 @@ LIB_SRC = src/log.c \
       src/udisks.c \
       src/health.c \
       src/watch.c \
+      src/scan.c \
+      src/rings.c \
       src/cli.c
 LIBKD = $(BUILD)/libkd.a
 
 # The window: needs GTK.
 APP_SRC = src/main.c \
       ui/window.c \
-      ui/units.c
+      ui/units.c \
+      ui/space.c
 APP_OBJ = $(patsubst %.c,$(BUILD)/%.o,$(APP_SRC))
 
 UNIT_TESTS = $(patsubst tests/unit/%.c,$(BUILD)/tests/%,$(wildcard tests/unit/test_*.c))
@@ -93,8 +96,11 @@ asan:
 	LSAN_OPTIONS=suppressions=$(CURDIR)/tools/lsan.supp \
 		$(MAKE) BUILD=$(BUILD)/asan SANITIZE=1 test
 
+# Full stacks on malloc: the suppressions name GTK functions that the fast
+# unwinder doesn't reach.
 asan-run: asan
-	LSAN_OPTIONS=suppressions=$(CURDIR)/tools/lsan.supp $(BUILD)/asan/kidisks $(ARGS)
+	LSAN_OPTIONS=suppressions=$(CURDIR)/tools/lsan.supp ASAN_OPTIONS=fast_unwind_on_malloc=0 \
+		$(BUILD)/asan/kidisks $(ARGS)
 
 install: $(BUILD)/kidisks $(MO_FILES)
 	install -Dm755 $< $(DESTDIR)$(BINDIR)/kidisks

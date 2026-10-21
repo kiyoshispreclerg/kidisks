@@ -15,6 +15,7 @@
 #include "i18n.h"
 #include "log.h"
 #include "prefs.h"
+#include "space.h"
 #include "units.h"
 
 /* How often the used/free numbers are refreshed while the Units tab shows. */
@@ -121,6 +122,12 @@ void kd_app_error(kd_app *app, const char *title, const char *detail)
     gtk_widget_show(d);
 }
 
+void kd_app_show_space(kd_app *app, const char *path)
+{
+    kd_space_open(app->space, path);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(app->notebook), KD_TAB_SPACE);
+}
+
 /* ---- keeping the disk model fresh --------------------------------------------- */
 
 /* Scans again; force: rebuild the tabs even if the layout is the same. */
@@ -137,6 +144,8 @@ static void rescan(kd_window *w, bool force)
     w->app.disks = d;
     kd_log_debug("rescan: %s", changed ? "rebuilding" : "numbers only");
     kd_units_update(w->app.units, changed);
+    if (changed)
+        kd_space_update(w->app.space);
 }
 
 static void on_watch(void *ud)
@@ -187,6 +196,7 @@ static void on_show_hidden(GtkCheckMenuItem *item, gpointer data)
     w->app.show_hidden = gtk_check_menu_item_get_active(item);
     kd_prefs_set_int(w->app.prefs, "units", "show_hidden", w->app.show_hidden);
     kd_units_update(w->app.units, true);
+    kd_space_update(w->app.space);
 }
 
 static void on_about(GtkMenuItem *item, gpointer data)
@@ -381,10 +391,13 @@ int kd_window_run(const kd_window_opts *opts)
     w.app.units = kd_units_new(&w.app);
     kd_log_debug("%.1f ms: units tab built",
                  (double)(g_get_monotonic_time() - opts->start_us) / 1000.0);
-    gtk_notebook_append_page(GTK_NOTEBOOK(w.app.notebook), kd_units_widget(w.app.units),
-                             tab_label(KD_TAB_UNITS));
-    for (int t = KD_TAB_UNITS + 1; t < KD_TAB_COUNT; t++)
-        gtk_notebook_append_page(GTK_NOTEBOOK(w.app.notebook), placeholder_page(t), tab_label(t));
+    w.app.space = kd_space_new(&w.app);
+    for (int t = 0; t < KD_TAB_COUNT; t++) {
+        GtkWidget *page = t == KD_TAB_UNITS   ? kd_units_widget(w.app.units)
+                          : t == KD_TAB_SPACE ? kd_space_widget(w.app.space)
+                                              : placeholder_page(t);
+        gtk_notebook_append_page(GTK_NOTEBOOK(w.app.notebook), page, tab_label(t));
+    }
     gtk_box_pack_start(GTK_BOX(vbox), w.app.notebook, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), w.app.status, FALSE, FALSE, 0);
     w.app.watch = kd_watch_new(on_watch, &w);
@@ -397,6 +410,8 @@ int kd_window_run(const kd_window_opts *opts)
     kd_log_debug("%.1f ms: shown", (double)(g_get_monotonic_time() - opts->start_us) / 1000.0);
     /* After show: GtkNotebook ignores set_current_page on hidden pages. */
     gtk_notebook_set_current_page(GTK_NOTEBOOK(w.app.notebook), tab);
+    if (opts->space_path)
+        kd_app_show_space(&w.app, opts->space_path);
 
     g_signal_connect(w.app.notebook, "switch-page", G_CALLBACK(on_switch_page), &w);
     g_signal_connect(w.app.window, "key-press-event", G_CALLBACK(on_key), &w);
@@ -434,6 +449,8 @@ int kd_window_run(const kd_window_opts *opts)
     } else if (kd_prefs_save(w.app.prefs) < 0) {
         kd_log_warn(_("could not save the settings: %s"), g_strerror(errno));
     }
+    /* Waits for a scan thread that may still be running. */
+    kd_space_free(w.app.space);
     kd_units_free(w.app.units);
     kd_disks_free(w.app.disks);
     g_free(w.layout_key);

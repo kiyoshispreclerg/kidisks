@@ -23,6 +23,8 @@ typedef struct {
     int tab;
     /* Quits right after the window is first drawn (startup timing, tests). */
     bool exit_after_map;
+    /* Opens the Space tab looking into this folder. */
+    const char *space_path;
     /* NULL = the default ~/.config/kidisks/kidisks.ini. */
     const char *prefs_path;
     /* g_get_monotonic_time() when main started, for the -v startup time. */

@@ -7,3 +7,5 @@ src/health.c
 src/cli.c
 ui/window.c
 ui/units.c
+ui/space.c
+src/scan.c

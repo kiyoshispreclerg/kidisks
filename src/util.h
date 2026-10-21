@@ -19,6 +19,12 @@ bool kd_dir_exists(const char *path);
  * then creates the file). */
 void kd_make_parent_dirs(const char *path);
 
+/* rm -r that stays put: never follows a symbolic link (a link is removed,
+ * not what it points to) and never goes into another filesystem mounted
+ * inside (EXDEV). Goes on past errors and removes all it can. 0, or -1 with
+ * errno set to the first error. */
+int kd_remove_tree(const char *path);
+
 /* snprintf for paths: false (and an empty string) if it would not fit. */
 bool kd_pathf(char *out, size_t size, const char *fmt, ...)
     __attribute__((format(printf, 3, 4)));

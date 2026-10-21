@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kidisks\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-09 09:38-0300\n"
+"POT-Creation-Date: 2026-10-21 11:14-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,18 +18,21 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: src/main.c:46
+#: src/main.c:48
 #, c-format
 msgid ""
 "Usage: kidisks [OPTION]...\n"
 "Disks, partitions, space usage and cleanup.\n"
 "\n"
 "  -t, --tab TAB        open on TAB: units, partitions, space or cleanup\n"
+"  -s, --space DIR      open the Space tab looking into DIR\n"
 "  -c, --config FILE    settings file (default ~/.config/kidisks/kidisks."
 "ini)\n"
 "  -l, --list           list the disks and partitions and exit\n"
-"  -b, --bytes          with --list: sizes and offsets in bytes\n"
+"  -b, --bytes          with --list or --scan: sizes and offsets in bytes\n"
 "  -a, --all            with --list: also loop and zram devices\n"
+"      --scan DIR       what takes up room under DIR (total and biggest)\n"
+"      --top N          with --scan: how many entries (default 20, -1 all)\n"
 "      --info DISK      drive details and health (SMART)\n"
 "      --mount DEV      mount a filesystem (prints where)\n"
 "      --unmount DEV    unmount it\n"
@@ -40,22 +43,27 @@ msgid ""
 "  -h, --help           print this help and exit\n"
 msgstr ""
 
-#: src/main.c:107
+#: src/main.c:113
 #, c-format
 msgid "unknown tab: %s"
 msgstr ""
 
-#: src/main.c:130 ui/window.c:350
+#: src/main.c:124
+#, c-format
+msgid "not a number: %s"
+msgstr ""
+
+#: src/main.c:150 ui/window.c:360
 msgid "out of memory"
 msgstr ""
 
-#: src/main.c:141
+#: src/main.c:161
 msgid ""
 "do not run Kidisks as root: it asks for the administrator password itself "
 "when a change needs it"
 msgstr ""
 
-#: src/main.c:148
+#: src/main.c:168
 msgid "cannot open the display"
 msgstr ""
 
@@ -72,41 +80,41 @@ msgstr ""
 msgid "could not read %s"
 msgstr ""
 
-#: src/disks.c:1096
+#: src/disks.c:1099
 msgid "[swap on]"
 msgstr ""
 
 #. TRANSLATORS: space used in a filesystem: "31.2 GiB used of 45.9 GiB"
-#: src/disks.c:1103
+#: src/disks.c:1106
 #, c-format
 msgid "%s used of %s"
 msgstr ""
 
-#: src/disks.c:1132 ui/units.c:474
+#: src/disks.c:1135 ui/units.c:489
 msgid "HDD"
 msgstr ""
 
-#: src/disks.c:1133 ui/units.c:474
+#: src/disks.c:1136 ui/units.c:489
 msgid "SSD"
 msgstr ""
 
-#: src/disks.c:1143
+#: src/disks.c:1146
 msgid "serial"
 msgstr ""
 
-#: src/disks.c:1147
+#: src/disks.c:1150
 msgid "(no media)"
 msgstr ""
 
-#: src/disks.c:1149
+#: src/disks.c:1152
 msgid "[system]"
 msgstr ""
 
-#: src/disks.c:1160
+#: src/disks.c:1163
 msgid "(free)"
 msgstr ""
 
-#: src/disks.c:1164
+#: src/disks.c:1167
 msgid "extended"
 msgstr ""
 
@@ -128,11 +136,11 @@ msgid ""
 "The device is busy: close the programs and terminals using it and try again."
 msgstr ""
 
-#: src/udisks.c:577 ui/units.c:216
+#: src/udisks.c:577 ui/units.c:222
 msgid "KIDISKS_ONLY_LOOP is set: only loop devices may be changed."
 msgstr ""
 
-#: src/udisks.c:579 ui/units.c:214
+#: src/udisks.c:579 ui/units.c:220
 msgid "UDisks2 is not ready yet."
 msgstr ""
 
@@ -231,98 +239,121 @@ msgstr ""
 msgid "%s and %s"
 msgstr ""
 
-#: src/cli.c:28
+#: src/cli.c:30
 #, c-format
 msgid "UDisks2 has no drive for %s"
 msgstr ""
 
-#: src/cli.c:34
+#: src/cli.c:36
 msgid "Health"
 msgstr ""
 
-#: src/cli.c:36
+#: src/cli.c:38
 msgid "Temperature"
 msgstr ""
 
-#: src/cli.c:39
+#: src/cli.c:41
 msgid "Powered on for"
 msgstr ""
 
-#: src/cli.c:42
+#: src/cli.c:44
 msgid "Bad sectors"
 msgstr ""
 
-#: src/cli.c:44 src/cli.c:46
+#: src/cli.c:46 src/cli.c:48
 msgid "Rotation"
 msgstr ""
 
-#: src/cli.c:46
+#: src/cli.c:48
 msgid "none (solid state)"
 msgstr ""
 
-#: src/cli.c:47
+#: src/cli.c:49
 msgid "Removable"
 msgstr ""
 
-#: src/cli.c:47 src/cli.c:48
+#: src/cli.c:49 src/cli.c:50
 msgid "yes"
 msgstr ""
 
-#: src/cli.c:47 src/cli.c:48
+#: src/cli.c:49 src/cli.c:50
 msgid "no"
 msgstr ""
 
-#: src/cli.c:48
+#: src/cli.c:50
 msgid "Can be powered off"
 msgstr ""
 
-#: src/cli.c:58
+#: src/cli.c:60
 msgid "cancelled"
 msgstr ""
 
-#: ui/window.c:40
+#: src/cli.c:128
+#, c-format
+msgid "cannot scan %s: %s"
+msgstr ""
+
+#: src/cli.c:139
+#, c-format
+msgid "%s: %s in %u file\n"
+msgid_plural "%s: %s in %u files\n"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/cli.c:152
+msgid "  (another filesystem, not counted)"
+msgstr ""
+
+#: src/cli.c:156
+#, c-format
+msgid "%u folder could not be read: the total is short"
+msgid_plural "%u folders could not be read: the total is short"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/window.c:41
 msgid "_Units"
 msgstr ""
 
-#: ui/window.c:41
+#: ui/window.c:42
 msgid ""
 "Disks and partitions at a glance: model, type, health, temperature and how "
 "full each partition is."
 msgstr ""
 
-#: ui/window.c:44
+#: ui/window.c:45
 msgid "_Partitions"
 msgstr ""
 
-#: ui/window.c:45
+#: ui/window.c:46
 msgid "Create, delete, format and resize partitions."
 msgstr ""
 
-#: ui/window.c:47
+#: ui/window.c:48
 msgid "_Space"
 msgstr ""
 
-#: ui/window.c:48
+#: ui/window.c:49
 msgid "What takes up room on a disk, in concentric rings."
 msgstr ""
 
-#: ui/window.c:50
+#: ui/window.c:51
 msgid "_Cleanup"
 msgstr ""
 
-#: ui/window.c:51
+#: ui/window.c:52
 msgid "Remove caches, leftovers and traces that programs leave behind."
 msgstr ""
 
-#: ui/window.c:83
+#: ui/window.c:84
 msgid "Coming in a future version."
 msgstr ""
 
-#: ui/window.c:200
+#: ui/window.c:210
 msgid "Disks, partitions, space usage and cleanup in one light program."
 msgstr ""
 
-#: ui/window.c:202
+#: ui/window.c:212
 msgid ""
 "Kidisks is free software: you can redistribute it and/or modify it under the "
 "terms of the GNU General Public License as published by the Free Software "
@@ -335,23 +366,23 @@ msgid ""
 "details."
 msgstr ""
 
-#: ui/window.c:233
+#: ui/window.c:243
 msgid "_File"
 msgstr ""
 
-#: ui/window.c:242
+#: ui/window.c:252
 msgid "_View"
 msgstr ""
 
-#: ui/window.c:248
+#: ui/window.c:258
 msgid "Show _hidden devices (loop, zram)"
 msgstr ""
 
-#: ui/window.c:255
+#: ui/window.c:265
 msgid "_Help"
 msgstr ""
 
-#: ui/window.c:435
+#: ui/window.c:450
 #, c-format
 msgid "could not save the settings: %s"
 msgstr ""
@@ -419,88 +450,273 @@ msgstr ""
 msgid "Ejecting %s…"
 msgstr ""
 
-#: ui/units.c:193 ui/units.c:195
+#: ui/units.c:193 ui/units.c:195 ui/space.c:771
 msgid "Could not open the folder"
 msgstr ""
 
-#: ui/units.c:277
+#: ui/units.c:283
 msgid "unlocked"
 msgstr ""
 
-#: ui/units.c:277
+#: ui/units.c:283
 msgid "locked"
 msgstr ""
 
-#: ui/units.c:279
+#: ui/units.c:285
 msgid "in use by LVM"
 msgstr ""
 
-#: ui/units.c:279
+#: ui/units.c:285
 msgid "LVM, inactive"
 msgstr ""
 
-#: ui/units.c:281
+#: ui/units.c:287
 msgid "in a RAID array"
 msgstr ""
 
-#: ui/units.c:283
+#: ui/units.c:289
 msgid "swap, off"
 msgstr ""
 
-#: ui/units.c:285
+#: ui/units.c:291
 msgid "not mounted"
 msgstr ""
 
-#: ui/units.c:313
+#: ui/units.c:319
 msgid "swap, in use"
 msgstr ""
 
-#: ui/units.c:332
+#: ui/units.c:338
 msgid "Mount"
 msgstr ""
 
-#: ui/units.c:336
+#: ui/units.c:342
 msgid "Unmount"
 msgstr ""
 
-#: ui/units.c:342
+#: ui/units.c:348
 msgid "Open in the file manager"
 msgstr ""
 
-#: ui/units.c:429
+#: ui/units.c:357
+msgid "See what takes up room here"
+msgstr ""
+
+#: ui/units.c:444
 #, c-format
 msgid "powered on for %s"
 msgstr ""
 
-#: ui/units.c:484
+#: ui/units.c:499
 #, c-format
 msgid "serial %s"
 msgstr ""
 
-#: ui/units.c:490
+#: ui/units.c:505
 msgid "system disk"
 msgstr ""
 
-#: ui/units.c:503
+#: ui/units.c:518
 msgid "Safely remove"
 msgstr ""
 
-#: ui/units.c:507
+#: ui/units.c:522
 msgid "Eject"
 msgstr ""
 
-#: ui/units.c:518
+#: ui/units.c:533
 msgid "No media"
 msgstr ""
 
-#: ui/units.c:534
+#: ui/units.c:549
 msgid "unallocated"
 msgstr ""
 
-#: ui/units.c:536
+#: ui/units.c:551
 msgid "extended partition"
 msgstr ""
 
-#: ui/units.c:569
+#: ui/units.c:584
 msgid "No disks found."
+msgstr ""
+
+#: ui/space.c:120
+#, c-format
+msgid "%s in %u file"
+msgid_plural "%s in %u files"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/space.c:277
+#, c-format
+msgid "%u file"
+msgid_plural "%u files"
+msgstr[0] ""
+msgstr[1] ""
+
+#. TRANSLATORS: a merged slice: "37 small items: 12 MiB (1%)"
+#: ui/space.c:404
+#, c-format
+msgid "%u small item: %s (%d%%)"
+msgid_plural "%u small items: %s (%d%%)"
+msgstr[0] ""
+msgstr[1] ""
+
+#. TRANSLATORS: "Downloads/: 12 GiB in 345 files (40%)"
+#: ui/space.c:413
+#, c-format
+msgid "%s/: %s (%d%%)"
+msgstr ""
+
+#: ui/space.c:420
+msgid "could not be read in full"
+msgstr ""
+
+#: ui/space.c:436
+#, c-format
+msgid "%s · %u folder could not be read"
+msgid_plural "%s · %u folders could not be read"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/space.c:607
+msgid "Out of memory"
+msgstr ""
+
+#: ui/space.c:611
+#, c-format
+msgid "Could not look into “%s”"
+msgstr ""
+
+#: ui/space.c:618
+#, c-format
+msgid ""
+"%u folder could not be read (no permission): the sizes above it are short"
+msgid_plural ""
+"%u folders could not be read (no permission): the sizes above them are short"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/space.c:636
+#, c-format
+msgid "“%s” moved to the trash"
+msgstr ""
+
+#: ui/space.c:637
+#, c-format
+msgid "“%s” deleted"
+msgstr ""
+
+#: ui/space.c:641
+#, c-format
+msgid "Could not move “%s” to the trash"
+msgstr ""
+
+#: ui/space.c:642
+#, c-format
+msgid "Could not delete “%s”"
+msgstr ""
+
+#: ui/space.c:667
+#, c-format
+msgid "%llu file, %s"
+msgid_plural "%llu files, %s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: ui/space.c:692
+#, c-format
+msgid "<b>Looking into %s…</b>"
+msgstr ""
+
+#: ui/space.c:701
+#, c-format
+msgid "Moving “%s” to the trash…"
+msgstr ""
+
+#: ui/space.c:701
+#, c-format
+msgid "Deleting “%s”…"
+msgstr ""
+
+#: ui/space.c:729
+msgid "Wait for the file operation to finish."
+msgstr ""
+
+#: ui/space.c:862
+msgid "No terminal program found"
+msgstr ""
+
+#: ui/space.c:866
+msgid "Could not open a terminal"
+msgstr ""
+
+#: ui/space.c:918
+#, c-format
+msgid "Delete “%s” for good?"
+msgstr ""
+
+#: ui/space.c:925
+#, c-format
+msgid ""
+"The folder and all inside it (%s) will be gone, with no way back. To be able "
+"to undo, move it to the trash instead."
+msgstr ""
+
+#: ui/space.c:932
+#, c-format
+msgid ""
+"The file (%s) will be gone, with no way back. To be able to undo, move it to "
+"the trash instead."
+msgstr ""
+
+#: ui/space.c:963
+msgid "_Open in the file manager"
+msgstr ""
+
+#: ui/space.c:964
+msgid "Open a _terminal here"
+msgstr ""
+
+#: ui/space.c:966
+msgid "_Copy the path"
+msgstr ""
+
+#: ui/space.c:968
+msgid "Move to the t_rash"
+msgstr ""
+
+#: ui/space.c:969
+msgid "_Delete…"
+msgstr ""
+
+#: ui/space.c:1041
+msgid "Choose a folder to look into"
+msgstr ""
+
+#: ui/space.c:1094
+#, c-format
+msgid "%s of %s used"
+msgstr ""
+
+#: ui/space.c:1109
+msgid "Home folder"
+msgstr ""
+
+#: ui/space.c:1128
+msgid "Choose a folder…"
+msgstr ""
+
+#: ui/space.c:1142
+msgid ""
+"Choose what to look into: a disk, your home folder or any folder. Each slice "
+"of the rings is a folder or file, as big as the room it takes."
+msgstr ""
+
+#: ui/space.c:1203
+msgid "Look into this folder again"
+msgstr ""
+
+#: ui/space.c:1206
+msgid "Up one folder (Backspace)"
 msgstr ""

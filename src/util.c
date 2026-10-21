@@ -1,11 +1,15 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "util.h"
 
+#include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 char *kd_read_file(const char *path, size_t *len)
 {
@@ -138,4 +142,83 @@ void kd_format_disk_size(char *out, size_t size, uint64_t bytes)
     kd_format_size(bin, sizeof bin, bytes);
     kd_format_size_si(si, sizeof si, bytes);
     snprintf(out, size, "%s (%s)", bin, si);
+}
+
+/* Removes name (in the folder open at dfd) and, if it is a folder,
+ * everything in it. Returns the first errno met, 0 if none. */
+static int remove_at(int dfd, const char *name, dev_t dev)
+{
+    struct stat st;
+    if (fstatat(dfd, name, &st, AT_SYMLINK_NOFOLLOW) < 0)
+        return errno == ENOENT ? 0 : errno;
+    if (!S_ISDIR(st.st_mode))
+        return unlinkat(dfd, name, 0) < 0 ? errno : 0;
+    /* A filesystem mounted inside is not ours to empty. */
+    if (st.st_dev != dev)
+        return EXDEV;
+    int fd = openat(dfd, name, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    if (fd < 0)
+        return errno;
+    DIR *d = fdopendir(fd);
+    if (!d) {
+        int e = errno;
+        close(fd);
+        return e;
+    }
+    int err = 0;
+    struct dirent *e;
+    while ((e = readdir(d))) {
+        const char *nm = e->d_name;
+        if (nm[0] == '.' && (!nm[1] || (nm[1] == '.' && !nm[2])))
+            continue;
+        int r = remove_at(dirfd(d), nm, dev);
+        if (r && !err)
+            err = r;
+    }
+    closedir(d);
+    if (unlinkat(dfd, name, AT_REMOVEDIR) < 0 && !err)
+        err = errno;
+    return err;
+}
+
+int kd_remove_tree(const char *path)
+{
+    char buf[KD_PATH_MAX];
+    if (!kd_pathf(buf, sizeof buf, "%s", path)) {
+        errno = ENAMETOOLONG;
+        return -1;
+    }
+    size_t len = strlen(buf);
+    while (len > 1 && buf[len - 1] == '/')
+        buf[--len] = '\0';
+    char *slash = strrchr(buf, '/');
+    const char *name = slash ? slash + 1 : buf;
+    if (!*name || strcmp(name, ".") == 0 || strcmp(name, "..") == 0) {
+        errno = EINVAL;
+        return -1;
+    }
+    const char *parent = ".";
+    if (slash == buf) {
+        parent = "/";
+    } else if (slash) {
+        *slash = '\0';
+        parent = buf;
+    }
+    int dfd = open(parent, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    struct stat st;
+    if (dfd < 0)
+        return -1;
+    if (fstatat(dfd, name, &st, AT_SYMLINK_NOFOLLOW) < 0) {
+        int e = errno;
+        close(dfd);
+        errno = e;
+        return -1;
+    }
+    int err = remove_at(dfd, name, st.st_dev);
+    close(dfd);
+    if (err) {
+        errno = err;
+        return -1;
+    }
+    return 0;
 }

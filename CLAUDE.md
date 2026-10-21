@@ -37,12 +37,20 @@ python3 tools/gen_fixtures.py          # recria tests/fixtures/sys1
 build/kidisks -v --exit-after-map      # tempos da abertura, etapa por etapa
 build/kidisks --list [-b] [-a]         # o modelo de discos em texto
 build/kidisks --info sda               # saúde (SMART) pelo UDisks2
+build/kidisks --scan DIR -b --top 0    # total da pasta; tem que bater com du -sxB1
+build/kidisks --space DIR              # janela já na aba Espaço, olhando DIR
 ```
 
 - Janela em teste: num X à parte, sem mexer no desktop do usuário:
   `Xvfb :77 -screen 0 1200x800x24 &`, rode com `DISPLAY=:77
   XDG_CONFIG_HOME=<scratchpad>/cfg NO_AT_BRIDGE=1` e capture com
   `python3 -c "from PIL import ImageGrab; ImageGrab.grab(xdisplay=':77').save('x.png')"`.
+  Mouse e cliques com `DISPLAY=:77 xdotool mousemove X Y click 1`. Para
+  achar o processo, `pgrep -x kidisks`: o `pgrep -f kidisks` acha também o
+  shell que roda o comando (e o `kill` derruba o próprio shell).
+- `make asan-run` e o ASan na janela: as supressões do `tools/lsan.supp`
+  citam funções do GTK, que só aparecem na pilha com
+  `ASAN_OPTIONS=fast_unwind_on_malloc=0` (o `asan-run` já põe).
 - O `~/.gtkrc-2.0` do usuário carrega o `appmenu-gtk-module`: a menu bar vai
   para o menu global e **não aparece na janela**. É o esperado. Para vê-la
   na captura, use um gtkrc sem a linha `gtk-modules` (`GTK2_RC_FILES=`).
@@ -68,9 +76,12 @@ build/kidisks --info sda               # saúde (SMART) pelo UDisks2
 | `src/udisks.c` | UDisks2 por GDBus: SMART, montar, desmontar, ejetar, remover com segurança; `KIDISKS_ONLY_LOOP` |
 | `src/watch.c` | avisa mudanças: udev + POLLPRI no mountinfo/swaps, com debounce |
 | `src/health.c` | SMART em palavras, "4 anos e 11 meses" |
-| `src/cli.c` | `--info`, `--mount`, `--unmount`, `--eject`, `--power-off` |
+| `src/cli.c` | `--info`, `--mount`, `--unmount`, `--eject`, `--power-off`, `--scan` |
+| `src/scan.c` | varredura (como o `du -x`) e árvore compacta: nós num vetor, nomes numa arena, filhos do maior para o menor |
+| `src/rings.c` | layout dos anéis (ângulos, fatias pequenas agrupadas, teste de clique), sem GTK |
 | `ui/app.h` | o que as abas compartilham (modelo, UDisks2, status, erros) |
 | `ui/units.c` | aba Unidades: cartões, barras de uso, botões |
+| `ui/space.c` | aba Espaço: lugares, trilha, anéis em Cairo (cache + destaque), menu, trabalhos em thread |
 | `src/i18n.h` | `_()`, `N_()`, domínio `kidisks` |
 | `ui/window.c` | janela, abas, menus, atalhos (Alt+1..4, Ctrl+Q, F5), sinais; mantém o modelo atualizado |
 | `data/` | `.desktop` e ícone (achado em `../data` quando roda do `build/`) |

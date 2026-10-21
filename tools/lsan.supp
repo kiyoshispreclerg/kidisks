@@ -1,2 +1,4 @@
 # fontconfig keeps a process-wide font cache that is never freed.
 leak:libfontconfig.so
+# GTK2 keeps what it loads for themed icons (gtk_icon_theme_load_icon) for good.
+leak:gtk_icon_info_load_icon
