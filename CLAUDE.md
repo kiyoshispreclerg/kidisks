@@ -106,8 +106,8 @@ nova custa um `FcFontSort` sobre todas as fontes instaladas (2455 aqui).
 - Caminhos com `kd_pathf` (falha em vez de truncar).
 - Tamanhos: `kd_format_size` (GiB, como o `lsblk`); discos inteiros com
   `kd_format_disk_size` ("111.8 GiB (120 GB)").
-- `README.md` (pt-BR, padrão) e `README.en.md` andam juntos: mudou um, mude
+- `README.md` (inglês, padrão) e `README.pt-BR.md` andam juntos: mudou um, mude
   o outro.
 - Licença GPL-3.0-or-later; `SPDX-License-Identifier` no topo de cada
   arquivo.
-- Commits em português, terminando com a linha Co-Authored-By.
+- Commits em inglês, terminando com a linha Co-Authored-By.
