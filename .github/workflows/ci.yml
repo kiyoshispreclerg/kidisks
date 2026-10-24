@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']   # tags go through the release workflow
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  BUILD_DEPS: >-
+    build-essential pkg-config gettext libglib2.0-dev libgtk2.0-dev libudev-dev
+
+jobs:
+  lint:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends $BUILD_DEPS cppcheck
+      - run: make lint
+
+  test:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc
+            cmd: make test
+          - name: asan
+            cmd: make asan
+          - name: clang
+            cmd: make BUILD=build/clang CC=clang test
+    name: test (${{ matrix.name }})
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends $BUILD_DEPS clang
+      - run: ${{ matrix.cmd }}
+        env:
+          LSAN_OPTIONS: suppressions=${{ github.workspace }}/tools/lsan.supp
+      # The whole program, not only the unit tests: open the window on a
+      # virtual X screen under ASan/UBSan (which abort on the first error)
+      # and quit right after the first map.
+      - name: Open the window under ASan
+        if: matrix.name == 'asan'
+        env:
+          LSAN_OPTIONS: suppressions=${{ github.workspace }}/tools/lsan.supp
+          ASAN_OPTIONS: fast_unwind_on_malloc=0
+          NO_AT_BRIDGE: '1'
+        run: |
+          sudo apt-get install -y --no-install-recommends xvfb xauth fonts-dejavu-core
+          export XDG_CONFIG_HOME=$RUNNER_TEMP/cfg
+          timeout 60 xvfb-run -a -s "-screen 0 1200x800x24" \
+            build/asan/kidisks -v --exit-after-map
