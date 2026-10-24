@@ -36,7 +36,14 @@ prefix=$(dirname "$(dirname "$(command -v kidisks)")")
 for f in "$prefix/share/applications/kidisks.desktop" \
 	"$prefix/share/icons/hicolor/scalable/apps/kidisks.svg" \
 	"$prefix/share/locale/pt_BR/LC_MESSAGES/kidisks.mo"; do
-	[ -f "$f" ] || fail "missing $f"
+	[ -f "$f" ] && continue
+	# Minimal container images (Ubuntu's) can tell dpkg to skip some paths:
+	# then it is enough that the package lists the file.
+	if command -v dpkg > /dev/null 2>&1 && dpkg -L kidisks 2> /dev/null | grep -qx "$f"; then
+		echo "   $f: in the package, skipped by dpkg's path-exclude"
+		continue
+	fi
+	fail "missing $f"
 done
 
 echo "== disk model (no disks may be present in a container)"
