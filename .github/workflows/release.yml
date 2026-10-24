@@ -117,8 +117,12 @@ jobs:
           fi
       - name: Install what the test needs
         run: apt-get install -y --no-install-recommends xvfb xauth fonts-dejavu-core
+      # Container jobs run as root, which kidisks refuses: use a plain user.
       - name: Run it
-        run: sh tools/smoke-test.sh
+        run: |
+          useradd -m tester
+          chown -R tester .
+          su tester -c 'sh tools/smoke-test.sh'
 
   publish:
     if: startsWith(github.ref, 'refs/tags/v')

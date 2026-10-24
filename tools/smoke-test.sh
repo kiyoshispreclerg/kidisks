@@ -5,10 +5,11 @@
 # Read-only: it never mounts or changes a disk.
 #
 # Usage: tools/smoke-test.sh      (from the repository root)
-# Needs xvfb-run and fonts. Touches nothing of the user's: HOME lives in a
+# Needs xvfb-run and fonts, and a non-root user (kidisks refuses root). Touches nothing of the user's: HOME lives in a
 # temporary folder.
 set -eu
 
+[ "$(id -u)" -ne 0 ] || { echo "kidisks refuses to run as root: use a plain user" >&2; exit 2; }
 [ -f config.mk ] || { echo "run it from the repository root" >&2; exit 2; }
 version=$(sed -n 's/^VERSION *= *//p' config.mk)
 
