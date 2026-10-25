@@ -32,6 +32,25 @@ kidisks --mount sdb1      # mounts it (and says where)
 kidisks --power-off sdb   # unmounts everything and powers the disk off
 ```
 
+## Installing
+
+The easiest way is the `.deb` package from the
+[releases page](https://github.com/kiyoshispreclerg/kidisks/releases). Each
+release has one for Ubuntu 22.04, Ubuntu 24.04, Debian 12 and Debian 13; pick
+the one that matches your system. They are named
+`kidisks_VERSION-1_SYSTEM_ARCH.deb`, and each one was installed and run on a
+clean system of its own kind before being published. Releases of `v0.x.x` (and
+tags with a hyphen, such as `v1.0.0-rc1`) are marked as pre-releases.
+
+```sh
+sudo apt install ./kidisks_0.1.0-1_ubuntu24.04_amd64.deb   # use the file you downloaded
+sudo apt remove kidisks
+```
+
+`apt` pulls in the libraries it needs, and `udisks2` (used to mount, eject and
+read SMART) comes along as a recommended package. To install from source
+instead, see [Building](#building).
+
 ## Building
 
 Dependencies (Debian/Ubuntu): `build-essential pkg-config libgtk2.0-dev
