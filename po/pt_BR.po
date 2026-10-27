@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: kidisks\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-21 11:14-0300\n"
+"POT-Creation-Date: 2026-10-27 10:13-0300\n"
 "PO-Revision-Date: 2026-10-09 08:30-0300\n"
 "Last-Translator: Kidisks contributors\n"
 "Language-Team: none\n"
@@ -41,7 +41,30 @@ msgid ""
 "  -v, --verbose        print what is going on\n"
 "  -V, --version        print the version and exit\n"
 "  -h, --help           print this help and exit\n"
-msgstr "Uso: kidisks [OPÇÃO]...\nDiscos, partições, uso do espaço e limpeza.\n\n  -t, --tab ABA        abre na ABA: units (unidades), partitions (partições),\n                       space (espaço) ou cleanup (limpeza), ou o número dela\n  -s, --space PASTA    abre a aba Espaço olhando a PASTA\n  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kidisks/kidisks.ini)\n  -l, --list           lista os discos e partições e sai\n  -b, --bytes          com --list ou --scan: tamanhos e posições em bytes\n  -a, --all            com --list: inclui loop e zram\n      --scan PASTA     o que ocupa espaço na PASTA (total e os maiores)\n      --top N          com --scan: quantos itens (padrão 20, -1 todos)\n      --info DISCO     detalhes e saúde do disco (SMART)\n      --mount DISP     monta um sistema de arquivos (mostra onde)\n      --unmount DISP   desmonta\n      --eject DISCO    ejeta a mídia\n      --power-off DISCO desmonta tudo no disco e o desliga\n  -v, --verbose        mostra o que está acontecendo\n  -V, --version        mostra a versão e sai\n  -h, --help           mostra esta ajuda e sai\n"
+msgstr ""
+"Uso: kidisks [OPÇÃO]...\n"
+"Discos, partições, uso do espaço e limpeza.\n"
+"\n"
+"  -t, --tab ABA        abre na ABA: units (unidades), partitions "
+"(partições),\n"
+"                       space (espaço) ou cleanup (limpeza), ou o número "
+"dela\n"
+"  -s, --space PASTA    abre a aba Espaço olhando a PASTA\n"
+"  -c, --config ARQ     arquivo de configuração (padrão ~/.config/kidisks/"
+"kidisks.ini)\n"
+"  -l, --list           lista os discos e partições e sai\n"
+"  -b, --bytes          com --list ou --scan: tamanhos e posições em bytes\n"
+"  -a, --all            com --list: inclui loop e zram\n"
+"      --scan PASTA     o que ocupa espaço na PASTA (total e os maiores)\n"
+"      --top N          com --scan: quantos itens (padrão 20, -1 todos)\n"
+"      --info DISCO     detalhes e saúde do disco (SMART)\n"
+"      --mount DISP     monta um sistema de arquivos (mostra onde)\n"
+"      --unmount DISP   desmonta\n"
+"      --eject DISCO    ejeta a mídia\n"
+"      --power-off DISCO desmonta tudo no disco e o desliga\n"
+"  -v, --verbose        mostra o que está acontecendo\n"
+"  -V, --version        mostra a versão e sai\n"
+"  -h, --help           mostra esta ajuda e sai\n"
 
 #: src/main.c:113
 #, c-format
@@ -81,6 +104,21 @@ msgstr "erro: "
 #, c-format
 msgid "could not read %s"
 msgstr "não foi possível ler %s"
+
+#: src/util.c:99 src/util.c:105 src/util.c:111 src/util.c:137
+#, c-format
+msgid "could not back up %s"
+msgstr "não foi possível fazer a cópia de segurança de %s"
+
+#: src/util.c:116
+#, c-format
+msgid "%s looks damaged; keeping the previous backup"
+msgstr "%s parece danificado; mantendo a cópia de segurança anterior"
+
+#: src/util.c:159
+#, c-format
+msgid "%s is missing or damaged; using %s"
+msgstr "%s não existe ou está danificado; usando %s"
 
 #: src/disks.c:1099
 msgid "[swap on]"
@@ -608,8 +646,12 @@ msgid ""
 "%u folder could not be read (no permission): the sizes above it are short"
 msgid_plural ""
 "%u folders could not be read (no permission): the sizes above them are short"
-msgstr[0] "%u pasta não pôde ser lida (sem permissão): os tamanhos acima dela estão abaixo do real"
-msgstr[1] "%u pastas não puderam ser lidas (sem permissão): os tamanhos acima delas estão abaixo do real"
+msgstr[0] ""
+"%u pasta não pôde ser lida (sem permissão): os tamanhos acima dela estão "
+"abaixo do real"
+msgstr[1] ""
+"%u pastas não puderam ser lidas (sem permissão): os tamanhos acima delas "
+"estão abaixo do real"
 
 #: ui/space.c:636
 #, c-format
@@ -675,14 +717,18 @@ msgstr "Apagar “%s” de vez?"
 msgid ""
 "The folder and all inside it (%s) will be gone, with no way back. To be able "
 "to undo, move it to the trash instead."
-msgstr "A pasta e tudo o que está dentro dela (%s) vão sumir, sem volta. Para poder desfazer, mande para a lixeira."
+msgstr ""
+"A pasta e tudo o que está dentro dela (%s) vão sumir, sem volta. Para poder "
+"desfazer, mande para a lixeira."
 
 #: ui/space.c:932
 #, c-format
 msgid ""
 "The file (%s) will be gone, with no way back. To be able to undo, move it to "
 "the trash instead."
-msgstr "O arquivo (%s) vai sumir, sem volta. Para poder desfazer, mande para a lixeira."
+msgstr ""
+"O arquivo (%s) vai sumir, sem volta. Para poder desfazer, mande para a "
+"lixeira."
 
 #: ui/space.c:963
 msgid "_Open in the file manager"
@@ -725,7 +771,9 @@ msgstr "Escolher pasta…"
 msgid ""
 "Choose what to look into: a disk, your home folder or any folder. Each slice "
 "of the rings is a folder or file, as big as the room it takes."
-msgstr "Escolha o que olhar: um disco, a pasta pessoal ou qualquer pasta. Cada fatia dos anéis é uma pasta ou arquivo, do tamanho do espaço que ocupa."
+msgstr ""
+"Escolha o que olhar: um disco, a pasta pessoal ou qualquer pasta. Cada fatia "
+"dos anéis é uma pasta ou arquivo, do tamanho do espaço que ocupa."
 
 #: ui/space.c:1203
 msgid "Look into this folder again"

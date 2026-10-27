@@ -280,6 +280,11 @@ delete = walk.files ~/.thumbnails/
   - botões "Prévia" e "Limpar"; a lista do que será apagado mostra o
     tamanho de cada item e o total no fim;
   - as marcações são lembradas em `~/.config/kidisks/kidisks.ini`.
+    Cada gravação é atômica (tmp + fsync + rename) e guarda a versão
+    anterior em `kidisks.ini.backup` (só se ela estiver íntegra: sem NUL e
+    sem nenhum aviso de leitura). Se o `.ini` sumir ou ficar vazio (queda de
+    energia), a leitura usa o `.backup`. Para "resetar" apagando o arquivo,
+    apague o `.backup` também, senão ele volta.
 
 Primeiro lote (fase 5), pensado num desktop como o daqui (Plasma 5,
 Firefox, Chromium/Brave, Steam):
@@ -567,7 +572,7 @@ num namespace, sem mexer no sistema de verdade.
 | Arquivo | Papel |
 |---|---|
 | `src/main.c` | opções, gettext, modo texto (`--list`, `--scan`, `--clean-preview`) ou janela |
-| `src/prefs.c` | o que a janela lembra (`~/.config/kidisks/kidisks.ini`) |
+| `src/prefs.c` | o que a janela lembra (`~/.config/kidisks/kidisks.ini` e o `.backup`; `kd_backup_file` e `kd_read_file_or_backup` em `util.c`) |
 | `src/disks.c` | modelo de discos e partições (sysfs + udev + mountinfo + swaps) |
 | `src/udevmon.c` | monitor do udev no laço da GLib |
 | `src/udisks.c` | UDisks2 por GDBus, assíncrono; SMART |

@@ -377,6 +377,24 @@ char *kd_ini_dump(const kd_ini *ini)
     return s;
 }
 
+static void count_warning(void *ud, int line_no, const char *msg)
+{
+    (void)line_no;
+    (void)msg;
+    (*(int *)ud)++;
+}
+
+bool kd_ini_check_clean(const char *text, size_t len)
+{
+    if (!kd_check_usable(text, len))
+        return false;
+    int warnings = 0;
+    kd_ini *ini = kd_ini_parse(text, count_warning, &warnings);
+    bool clean = ini && warnings == 0;
+    kd_ini_free(ini);
+    return clean;
+}
+
 int kd_ini_save(const kd_ini *ini, const char *path)
 {
     char tmp[KD_PATH_MAX];
@@ -387,12 +405,13 @@ int kd_ini_save(const kd_ini *ini, const char *path)
         return -1;
     }
     kd_make_parent_dirs(path);
+    kd_backup_file(path, kd_ini_check_clean);
     FILE *f = fopen(tmp, "w");
     if (!f) {
         free(text);
         return -1;
     }
-    bool ok = fputs(text, f) >= 0 && fflush(f) == 0;
+    bool ok = fputs(text, f) >= 0 && kd_flush_sync(f) == 0;
     ok = fclose(f) == 0 && ok;
     free(text);
     if (!ok || rename(tmp, path) < 0) {

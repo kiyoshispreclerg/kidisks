@@ -11,6 +11,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include "i18n.h"
+#include "log.h"
+
 char *kd_read_file(const char *path, size_t *len)
 {
     FILE *f = fopen(path, "rb");
@@ -47,6 +50,124 @@ char *kd_read_file(const char *path, size_t *len)
     if (len)
         *len = size;
     return buf;
+}
+
+bool kd_check_usable(const char *text, size_t len)
+{
+    return len > 0 && memchr(text, '\0', len) == NULL;
+}
+
+bool kd_check_lines(const char *text, size_t len)
+{
+    return kd_check_usable(text, len) && text[len - 1] == '\n';
+}
+
+bool kd_check_pem(const char *text, size_t len)
+{
+    return kd_check_usable(text, len) && strstr(text, "-----BEGIN ") &&
+           strstr(text, "-----END ");
+}
+
+int kd_flush_sync(FILE *f)
+{
+    if (fflush(f) != 0)
+        return -1;
+    return fsync(fileno(f));
+}
+
+static int write_all(int fd, const char *buf, size_t len)
+{
+    while (len) {
+        ssize_t n = write(fd, buf, len);
+        if (n < 0) {
+            if (errno == EINTR)
+                continue;
+            return -1;
+        }
+        buf += n;
+        len -= (size_t)n;
+    }
+    return 0;
+}
+
+int kd_backup_file(const char *path, kd_check_fn ok)
+{
+    struct stat st;
+    if (stat(path, &st) < 0) {
+        if (errno == ENOENT)
+            return 0;
+        kd_log_warn(_("could not back up %s"), path);
+        return -1;
+    }
+    char bak[KD_PATH_MAX], tmp[KD_PATH_MAX];
+    if (!kd_pathf(bak, sizeof bak, "%s.backup", path) ||
+        !kd_pathf(tmp, sizeof tmp, "%s.backup.tmp", path)) {
+        kd_log_warn(_("could not back up %s"), path);
+        return -1;
+    }
+    size_t len = 0;
+    char *text = kd_read_file(path, &len);
+    if (!text) {
+        kd_log_warn(_("could not back up %s"), path);
+        return -1;
+    }
+    if (ok && !ok(text, len)) {
+        free(text);
+        kd_log_warn(_("%s looks damaged; keeping the previous backup"), path);
+        errno = EINVAL;
+        return -1;
+    }
+    int fd = open(tmp, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, st.st_mode & 07777);
+    /* fchmod before any data: open's mode is cut by the umask, and a stale
+     * tmp keeps whatever mode it had. */
+    bool good = fd >= 0 && fchmod(fd, st.st_mode & 07777) == 0 &&
+                write_all(fd, text, len) == 0 && fsync(fd) == 0;
+    int e = errno;
+    if (fd >= 0 && close(fd) != 0 && good) {
+        good = false;
+        e = errno;
+    }
+    free(text);
+    if (good && rename(tmp, bak) < 0) {
+        good = false;
+        e = errno;
+    }
+    if (!good) {
+        remove(tmp);
+        kd_log_warn(_("could not back up %s"), path);
+        errno = e;
+        return -1;
+    }
+    return 0;
+}
+
+char *kd_read_file_or_backup(const char *path, kd_check_fn ok, size_t *len)
+{
+    size_t n = 0;
+    char *text = kd_read_file(path, &n);
+    if (text && (!ok || ok(text, n))) {
+        if (len)
+            *len = n;
+        return text;
+    }
+    int saved = errno;
+    char bak[KD_PATH_MAX];
+    if (kd_pathf(bak, sizeof bak, "%s.backup", path)) {
+        size_t bn = 0;
+        char *b = kd_read_file(bak, &bn);
+        if (b && (!ok || ok(b, bn))) {
+            kd_log_warn(_("%s is missing or damaged; using %s"), path, bak);
+            free(text);
+            if (len)
+                *len = bn;
+            return b;
+        }
+        free(b);
+    }
+    if (text && len)
+        *len = n;
+    errno = saved;
+    return text;
 }
 
 bool kd_file_exists(const char *path)

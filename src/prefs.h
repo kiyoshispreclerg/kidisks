@@ -10,7 +10,9 @@
  *
  * kd_prefs owns its kd_ini and the path. Missing or unreadable files give
  * empty prefs (the getters then return the defaults); a broken line is
- * skipped with a warning. */
+ * skipped with a warning. Every save keeps the previous file as
+ * kidisks.ini.backup, and a missing or emptied kidisks.ini is read from it:
+ * to reset the prefs, delete both. */
 
 typedef struct kd_prefs kd_prefs;
 

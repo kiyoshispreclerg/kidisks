@@ -34,7 +34,7 @@ kd_prefs *kd_prefs_load(const char *path)
     else
         kd_config_path(p->path, sizeof p->path, "kidisks.ini");
 
-    char *text = p->path[0] ? kd_read_file(p->path, NULL) : NULL;
+    char *text = p->path[0] ? kd_read_file_or_backup(p->path, kd_check_usable, NULL) : NULL;
     if (!text && p->path[0] && errno != ENOENT)
         kd_log_warn(_("could not read %s"), p->path);
     p->ini = text ? kd_ini_parse(text, warn_line, p) : kd_ini_new();

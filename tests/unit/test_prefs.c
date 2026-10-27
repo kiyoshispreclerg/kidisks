@@ -61,6 +61,24 @@ TEST(save_keeps_comments_and_unknown_keys)
     free(text);
 }
 
+TEST(emptied_file_is_read_from_the_backup)
+{
+    remove(path);
+    write_file("[window]\ntab = 1\n");
+    kd_prefs *p = kd_prefs_load(path);
+    CHECK(p);
+    kd_prefs_set_int(p, "window", "tab", 2);
+    CHECK_INT_EQ(kd_prefs_save(p), 0);
+    kd_prefs_free(p);
+
+    /* What a power cut leaves: the main file empty. */
+    write_file("");
+    p = kd_prefs_load(path);
+    CHECK(p);
+    CHECK_INT_EQ(kd_prefs_get_int(p, "window", "tab", 0, 0, 3), 1);
+    kd_prefs_free(p);
+}
+
 int main(void)
 {
     if (!mkdtemp(dir))
@@ -69,7 +87,7 @@ int main(void)
     RUN(missing_file_gives_defaults);
     RUN(bad_values_fall_back_or_clamp);
     RUN(save_keeps_comments_and_unknown_keys);
-    remove(path);
-    rmdir(dir);
+    RUN(emptied_file_is_read_from_the_backup);
+    kd_remove_tree(dir);
     return harness_report();
 }

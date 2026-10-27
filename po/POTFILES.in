@@ -1,6 +1,7 @@
 src/main.c
 src/log.c
 src/prefs.c
+src/util.c
 src/disks.c
 src/udisks.c
 src/health.c

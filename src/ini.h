@@ -3,6 +3,7 @@
 #define KD_INI_H
 
 #include <stdbool.h>
+#include <stddef.h>
 
 /* A small INI document that can be read and edited in place:
  *
@@ -50,7 +51,14 @@ void kd_ini_remove_section(kd_ini *ini, const char *section);
 
 /* The whole document as text; the caller frees it. */
 char *kd_ini_dump(const kd_ini *ini);
-/* Writes atomically (temp file + rename), creating the parent folders. */
+/* For kd_backup_file: usable and read without a single warning. Stricter
+ * than what loading needs, so a typo does not replace the good backup. */
+bool kd_ini_check_clean(const char *text, size_t len);
+
+/* Writes atomically (temp file + fsync + rename), creating the parent
+ * folders. The file being replaced is first copied to <path>.backup, if it
+ * is sound; a failed backup is only a warning. */
+
 int kd_ini_save(const kd_ini *ini, const char *path);
 
 #endif
